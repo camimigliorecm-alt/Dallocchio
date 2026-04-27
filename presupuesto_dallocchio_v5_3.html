@@ -477,8 +477,8 @@ body{font-family:'Montserrat',sans-serif;background:#dedad4;color:var(--negro);p
 }
 
 /* ══ MODAL IMPRESIÓN ══ */
-.print-overlay{position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,.5)!important;z-index:100001!important;display:none!important;align-items:center;justify-content:center;}
-.print-overlay.visible{display:flex!important;}
+.print-overlay{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,.5);z-index:100001;display:none;align-items:center;justify-content:center;}
+.print-overlay.visible{display:flex;}
 .print-modal{background:white;width:420px;max-width:95vw;border-radius:3px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.25);}
 .print-modal-header{background:var(--negro);color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
 .print-modal-title{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;}
@@ -1317,8 +1317,17 @@ function mostrarModalImpresion(){
 
     const po=document.getElementById('print-overlay');
     if(!po){showToast('Error: overlay de impresión no encontrado');return;}
-    po.style.cssText='display:flex!important;position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,.5)!important;z-index:100001!important;align-items:center!important;justify-content:center!important;';
-    po.classList.add('visible');
+    po.removeAttribute('style');
+    po.style.display='flex';
+    po.style.position='fixed';
+    po.style.top='0';
+    po.style.left='0';
+    po.style.width='100vw';
+    po.style.height='100vh';
+    po.style.background='rgba(0,0,0,.5)';
+    po.style.zIndex='100001';
+    po.style.alignItems='center';
+    po.style.justifyContent='center';
     }catch(err){
       showToast('Error al abrir impresión: '+err.message);
     }
@@ -1332,7 +1341,8 @@ function cerrarModalImpresion(){
     if(el)el.classList.remove('oculto-pdf');
   });
   _seccionesOcultadasPorModal=[];
-  document.getElementById('print-overlay').classList.remove('visible');
+  const po=document.getElementById('print-overlay');
+  if(po){po.removeAttribute('style');}
 }
 
 function ejecutarImpresion(){
@@ -1349,7 +1359,8 @@ function ejecutarImpresion(){
     }
   });
 
-  document.getElementById('print-overlay').classList.remove('visible');
+  const _po=document.getElementById('print-overlay');
+  if(_po){_po.removeAttribute('style');}
 
   // Pequeño delay para que el DOM actualice antes de imprimir
   setTimeout(()=>{
@@ -1832,16 +1843,35 @@ async function sheetdbSincronizar(){
 
 // ── UI del panel ──
 function abrirPanelProyectos(){
-  // setTimeout(0) rompe el ciclo del evento actual: evita que el click del botón
-  // burbujee al overlay y lo cierre de inmediato. También fuerza estilos inline completos.
+  // setTimeout(0) rompe el ciclo del evento actual para evitar que el click
+  // burbujee al overlay y lo cierre de inmediato.
   setTimeout(()=>{
     const overlay=document.getElementById('proy-overlay');
     const drawer=document.getElementById('proy-drawer');
     if(!overlay||!drawer){showToast('Error: panel no encontrado');return;}
-    overlay.style.cssText='display:block!important;position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,.45)!important;z-index:99999!important;';
-    drawer.style.cssText='display:flex!important;flex-direction:column!important;position:fixed!important;top:0!important;right:0!important;height:100vh!important;width:380px!important;background:white!important;z-index:100000!important;box-shadow:-4px 0 24px rgba(0,0,0,.18)!important;overflow-y:auto!important;';
-    overlay.classList.add('visible');
-    drawer.classList.add('visible');
+    // Limpiar estilos inline anteriores y aplicar sin !important
+    // (los estilos inline ya tienen mayor especificidad que cualquier regla CSS)
+    overlay.removeAttribute('style');
+    drawer.removeAttribute('style');
+    overlay.style.display='block';
+    overlay.style.position='fixed';
+    overlay.style.top='0';
+    overlay.style.left='0';
+    overlay.style.width='100vw';
+    overlay.style.height='100vh';
+    overlay.style.background='rgba(0,0,0,.45)';
+    overlay.style.zIndex='99999';
+    drawer.style.display='flex';
+    drawer.style.flexDirection='column';
+    drawer.style.position='fixed';
+    drawer.style.top='0';
+    drawer.style.right='0';
+    drawer.style.height='100vh';
+    drawer.style.width='380px';
+    drawer.style.background='white';
+    drawer.style.zIndex='100000';
+    drawer.style.boxShadow='-4px 0 24px rgba(0,0,0,.18)';
+    drawer.style.overflowY='auto';
     const campo=document.getElementById('proy-url-field');
     if(campo)campo.value=getSheetDbUrl();
     cargarListaProyectos(filtroEstadoActual);
@@ -1851,8 +1881,9 @@ function abrirPanelProyectos(){
 function cerrarPanelProyectos(){
   const overlay=document.getElementById('proy-overlay');
   const drawer=document.getElementById('proy-drawer');
-  if(overlay){overlay.classList.remove('visible');overlay.style.display='none';}
-  if(drawer){drawer.classList.remove('visible');drawer.style.display='none';}
+  // Quitar estilos inline para que el CSS (display:none) tome el control
+  if(overlay){overlay.removeAttribute('style');}
+  if(drawer){drawer.removeAttribute('style');}
 }
 
 function toggleConfigPanel(){
