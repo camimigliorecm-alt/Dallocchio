@@ -1278,7 +1278,11 @@ const SECCIONES_PRINT=[
 let _seccionesOcultadasPorModal=[];
 
 function mostrarModalImpresion(){
+  try{
+  console.log('[Imprimir] abriendo modal...');
   const lista=document.getElementById('print-opciones-lista');
+  console.log('[Imprimir] lista:', lista);
+  if(!lista){showToast('Error: modal de impresión no encontrado');return;}
   lista.innerHTML='';
   _seccionesOcultadasPorModal=[];
 
@@ -1311,7 +1315,16 @@ function mostrarModalImpresion(){
     lista.innerHTML='<div style="font-size:9px;color:var(--gris-medio);font-style:italic;">No hay secciones opcionales activas en este presupuesto.</div>';
   }
 
-  document.getElementById('print-overlay').classList.add('visible');
+  const po=document.getElementById('print-overlay');
+  console.log('[Imprimir] print-overlay:', po);
+  if(!po){showToast('Error: overlay de impresión no encontrado');return;}
+  po.style.display='flex';
+  po.classList.add('visible');
+  console.log('[Imprimir] modal abierto ✓');
+  }catch(err){
+    console.error('[Imprimir] error:', err);
+    showToast('Error al abrir impresión: '+err.message);
+  }
 }
 
 function cerrarModalImpresion(){
@@ -1821,20 +1834,33 @@ async function sheetdbSincronizar(){
 
 // ── UI del panel ──
 function abrirPanelProyectos(){
-  const overlay=document.getElementById('proy-overlay');
-  const drawer=document.getElementById('proy-drawer');
-  if(!overlay||!drawer){console.error('Panel HTML no encontrado');return;}
-  overlay.classList.add('visible');
-  drawer.classList.add('visible');
-  const url=getSheetDbUrl();
-  const campo=document.getElementById('proy-url-field');
-  if(campo)campo.value=url;
-  cargarListaProyectos(filtroEstadoActual);
+  try{
+    console.log('[Proyectos] abriendo panel...');
+    const overlay=document.getElementById('proy-overlay');
+    const drawer=document.getElementById('proy-drawer');
+    console.log('[Proyectos] overlay:', overlay, '| drawer:', drawer);
+    if(!overlay||!drawer){showToast('Error: panel no encontrado');console.error('Panel HTML no encontrado');return;}
+    // Forzar visibilidad con estilos directos (más robusto que classList)
+    overlay.style.display='block';
+    drawer.style.display='flex';
+    overlay.classList.add('visible');
+    drawer.classList.add('visible');
+    console.log('[Proyectos] panel abierto ✓');
+    const url=getSheetDbUrl();
+    const campo=document.getElementById('proy-url-field');
+    if(campo)campo.value=url;
+    cargarListaProyectos(filtroEstadoActual);
+  }catch(err){
+    console.error('[Proyectos] error al abrir:', err);
+    showToast('Error al abrir proyectos: '+err.message);
+  }
 }
 
 function cerrarPanelProyectos(){
-  document.getElementById('proy-overlay')?.classList.remove('visible');
-  document.getElementById('proy-drawer')?.classList.remove('visible');
+  const overlay=document.getElementById('proy-overlay');
+  const drawer=document.getElementById('proy-drawer');
+  if(overlay){overlay.classList.remove('visible');overlay.style.display='none';}
+  if(drawer){drawer.classList.remove('visible');drawer.style.display='none';}
 }
 
 function toggleConfigPanel(){
