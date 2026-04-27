@@ -22,7 +22,7 @@
 body{font-family:'Montserrat',sans-serif;background:#dedad4;color:var(--negro);padding:24px 16px;font-size:13px;}
 
 /* ══ TOOLBAR ══ */
-.toolbar{max-width:880px;margin:0 auto 12px;background:var(--negro);padding:8px 16px;border-radius:3px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.toolbar{max-width:880px;margin:0 auto 12px;background:var(--negro);padding:8px 16px;border-radius:3px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:relative;z-index:10;}
 .tb-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .tb-badge{font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);}
 .estado-grupo{display:flex;gap:3px;}
@@ -1600,11 +1600,23 @@ function setEstado(btn,estado){
     const estadoActual=actual?actual.classList[1]:'borrador';
     if(estadoActual==='borrador'||confirm(`¿Confirmar cambio de estado a "${estado.toUpperCase()}"? Esto bloqueará la edición del documento.`)){
       aplicarEstado(btn,estado);
+      bloquearEdicion();
     }
   }else{
     aplicarEstado(btn,estado);
     habilitarEdicion();
   }
+}
+
+function bloquearEdicion(){
+  // Deshabilitar todos los campos editables del documento (no los de la toolbar)
+  document.querySelectorAll('.hoja input:not([type=button]),.hoja textarea,.hoja select').forEach(el=>{
+    el.setAttribute('disabled','disabled');
+  });
+  // Deshabilitar clicks en chips, tareas, medios, etc.
+  document.querySelectorAll('.hoja .tipo-chip,.hoja .sub-item,.hoja .tarea-grupo,.hoja .medio-item,.hoja .cb,.hoja .org-btn,.hoja .ojo,.hoja .doc-master-toggle').forEach(el=>{
+    el.style.pointerEvents='none';el.style.opacity='0.6';
+  });
 }
 
 function aplicarEstado(btn,estado){
@@ -1628,6 +1640,9 @@ function aplicarEstado(btn,estado){
 function habilitarEdicion(){
   document.querySelectorAll('.hoja input,.hoja textarea,.hoja select').forEach(el=>{
     el.removeAttribute('disabled');
+  });
+  document.querySelectorAll('.hoja .tipo-chip,.hoja .sub-item,.hoja .tarea-grupo,.hoja .medio-item,.hoja .cb,.hoja .org-btn,.hoja .ojo,.hoja .doc-master-toggle').forEach(el=>{
+    el.style.pointerEvents='';el.style.opacity='';
   });
 }
 
