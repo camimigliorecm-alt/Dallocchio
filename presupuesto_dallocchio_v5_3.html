@@ -1788,31 +1788,71 @@ function deserializarFormulario(datos){
   if(datos.bloques_ocultos)datos.bloques_ocultos.forEach(id=>{const el=document.getElementById(id);if(el){el.classList.add('oculto-pdf');const btn=document.getElementById('ojo-'+id.replace('bloque-','').replace('contenido-',''));if(btn)btn.textContent='🙈';}});
 }
 
-// ── GUARDAR PROYECTO ──
-async function guardarProyecto(){
-  const url=getSheetDbUrl();
-  if(!url){showToast('Configurá SheetDB primero (📂 Proyectos → Configurar)');return;}
-  const datos=serializarFormulario();
-  const cliente=document.querySelector('.campo-valor')?.value||'Sin cliente';
+// ── EXTRAER DATOS RESUMEN DEL FORMULARIO ──
+function extraerResumen(){
+  const campos=document.querySelectorAll('#hoja .campo-valor');
+  // Orden en el DOM: [0]=nombre, [1]=dni, [2]=iva, [3]=domicilio, [4]=localidad, [5]=telefono
+  //                  [6]=partida, [7]=dir_obra, [8]=localidad_obra, [9]=terreno_m2
+  const get=i=>campos[i]?.value||'';
   const chips=[...document.querySelectorAll('.tipo-chip.activo')].map(c=>c.textContent.replace('✓','').trim());
   const tipo=chips.length>0?(chips[0].includes('Gas')?'GAS':chips[0].includes('Sanitarias')?'OSM':'ARQ'):'—';
   const preEl=document.getElementById('ni-pre');
   const numero=(presupuestoGenerado&&preEl?.value)
     ?(preEl.value+'-'+(document.getElementById('ni-yr')?.value||'')+'-'+(document.getElementById('ni-num')?.value||''))
     :'Sin número';
-  const honTotal=document.getElementById('hon-total')?.textContent?.replace('$','').trim()||'';
+  const honTotalText=document.getElementById('hon-total')?.textContent||'';
+  const honTotal=honTotalText.replace(/[$\s]/g,'').replace(/\./g,'').replace(',','.');
+  // M2 superficies
+  const m2Proy=document.getElementById('tot-proy')?.value||'';
+  const m2Exist=document.getElementById('tot-exist')?.value||'';
+  const m2Dem=document.getElementById('tot-dem')?.value||'';
+  // Precio en dólares: buscar inputs de referencia dólar visibles en los bloques
+  let honDolar='';
+  const dolarInputs=[...document.querySelectorAll('.hon-dolar-ref.visible input')];
+  if(dolarInputs.length){
+    // Tomar el último valor ingresado como referencia (cotización)
+    const cotiz=dolarInputs[0]?.value||'';
+    if(cotiz&&honTotal){
+      const pesos=parseFloat(honTotal)||0;
+      const tc=parseFloat(cotiz)||0;
+      if(tc>0)honDolar=(pesos/tc).toFixed(2);
+    }
+  }
+  return{
+    numero,tipo,
+    cliente:get(0),
+    dni_cuit:get(1),
+    direccion_obra:get(7),
+    localidad_obra:get(8),
+    terreno_m2:get(9),
+    honorarios:honTotal,
+    honorarios_dolares:honDolar,
+    m2_proyectado:m2Proy,
+    m2_existente:m2Exist,
+    m2_demoler:m2Dem,
+  };
+}
+
+// ── GUARDAR PROYECTO ──
+async function guardarProyecto(){
+  const url=getSheetDbUrl();
+  if(!url){showToast('Configurá SheetDB primero (📂 Proyectos → Configurar)');return;}
+  const datos=serializarFormulario();
+  const resumen=extraerResumen();
+  const{numero,tipo,cliente,dni_cuit,direccion_obra,localidad_obra,terreno_m2,honorarios,honorarios_dolares,m2_proyectado,m2_existente,m2_demoler}=resumen;
   const ahora=new Date().toLocaleDateString('es-AR');
   const estadoBtn=document.querySelector('.eb.activo');
   const estado=estadoBtn?estadoBtn.classList[1]:'borrador';
   const saving=document.getElementById('proy-saving');
   if(saving)saving.style.display='block';
   try{
+    const camposComunes={numero,cliente,dni_cuit,tipo,estado,honorarios,honorarios_dolares,m2_proyectado,m2_existente,m2_demoler,terreno_m2,direccion_obra,localidad_obra,fecha_modificacion:ahora,datos_json:JSON.stringify(datos)};
     if(proyectoIdActual){
       // Actualizar proyecto existente en esta sesión
       const res=await fetch(url+'/id/'+proyectoIdActual,{
         method:'PATCH',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({data:{numero,cliente,tipo,estado,honorarios:honTotal,fecha_modificacion:ahora,datos_json:JSON.stringify(datos)}})
+        body:JSON.stringify({data:camposComunes})
       });
       if(!res.ok)throw new Error('Error al actualizar');
       showToast('Proyecto actualizado ✓');
@@ -1822,10 +1862,10 @@ async function guardarProyecto(){
       const res=await fetch(url,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({data:[{id,numero,cliente,tipo,estado,honorarios:honTotal,fecha_creacion:ahora,fecha_modificacion:ahora,datos_json:JSON.stringify(datos)}]})
+        body:JSON.stringify({data:[{id,fecha_creacion:ahora,...camposComunes}]})
       });
       if(!res.ok)throw new Error('Error al guardar');
-      proyectoIdActual=id; // Registrar que esta sesión ya tiene un ID
+      proyectoIdActual=id;
       showToast('Proyecto guardado ✓');
     }
   }catch(e){
@@ -1907,7 +1947,7 @@ async function eliminarProyecto(id,nombre){
       <input class="proy-url-input" id="proy-url-field" type="text" placeholder="https://sheetdb.io/api/v1/xxxxxxxx">
       <div class="proy-url-hint">
         1. Creá una hoja en <a href="https://sheets.google.com" target="_blank">Google Sheets</a> con estas columnas en la fila 1:<br>
-        <strong>id · numero · cliente · tipo · estado · honorarios · fecha_creacion · fecha_modificacion · datos_json</strong><br><br>
+        <strong>id · numero · cliente · dni_cuit · tipo · estado · honorarios · honorarios_dolares · m2_proyectado · m2_existente · m2_demoler · terreno_m2 · direccion_obra · localidad_obra · fecha_creacion · fecha_modificacion · datos_json</strong><br><br>
         2. Registrate en <a href="https://sheetdb.io" target="_blank">sheetdb.io</a> (gratis), conectá tu hoja y copiá la URL de la API aquí.
       </div>
       <button class="proy-url-save" onclick="guardarUrlSheetDb()">Guardar configuración</button>
