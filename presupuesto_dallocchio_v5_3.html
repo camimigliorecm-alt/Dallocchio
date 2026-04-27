@@ -1128,7 +1128,7 @@ function nuevoPresupuesto(){
   document.getElementById('bloque-indicadores').style.display='none';
   document.getElementById('bloque-superficies').style.display='none';
   document.getElementById('clausula-deslinde').style.display='none';
-  document.getElementById('sp-arq-solo').style.display='none';
+  const _spArq=document.getElementById('sp-arq-solo');if(_spArq)_spArq.style.display='none';
   document.getElementById('titulo-sub').textContent='—';
   document.getElementById('enc-esp').textContent='Arquitectura · Instalaciones de Gas · Obras Sanitarias';
   showToast('Nuevo presupuesto iniciado');
@@ -2051,38 +2051,31 @@ function extraerResumen(){
 
 // ── GUARDAR PROYECTO ──
 async function guardarProyecto(){
-  const url=getSheetDbUrl();
-  if(!url){showToast('Configurá SheetDB primero (📂 Proyectos → Configurar)');return;}
   const datos=serializarFormulario();
   const resumen=extraerResumen();
   const ahora=new Date().toLocaleDateString('es-AR');
   const saving=document.getElementById('proy-saving');
   if(saving)saving.style.display='block';
+
   try{
-    const camposComunes={...resumen,fecha_modificacion:ahora,datos_json:JSON.stringify(datos)};
-    if(proyectoIdActual){
-      // Actualizar proyecto existente en esta sesión
-      const res=await fetch(url+'/id/'+proyectoIdActual,{
-        method:'PATCH',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({data:camposComunes})
-      });
-      if(!res.ok)throw new Error('Error al actualizar');
-      showToast('Proyecto actualizado ✓');
-    }else{
-      // Crear proyecto nuevo
-      const id='P'+Date.now();
-      const res=await fetch(url,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({data:[{id,fecha_creacion:ahora,...camposComunes}]})
-      });
-      if(!res.ok)throw new Error('Error al guardar');
-      proyectoIdActual=id;
-      showToast('Proyecto guardado ✓');
-    }
+    // 1. localStorage (siempre funciona, sin CORS)
+    const id=proyectoIdActual||('P'+Date.now());
+    const esNuevo=!proyectoIdActual;
+    const proyecto={
+      id,
+      ...(esNuevo?{fecha_creacion:ahora}:{}),
+      ...resumen,
+      fecha_modificacion:ahora,
+      datos_json:JSON.stringify(datos)
+    };
+    dbUpsert(proyecto);
+    proyectoIdActual=id;
+    showToast(esNuevo?'Proyecto guardado ✓':'Proyecto actualizado ✓');
+
+    // 2. SheetDB en background (best-effort, silencioso ante CORS)
+    sheetdbPush(proyecto);
   }catch(e){
-    showToast('Error al guardar. Verificá la conexión y la URL de SheetDB.');
+    showToast('Error al guardar.');
     console.error(e);
   }finally{
     if(saving)saving.style.display='none';
@@ -2091,33 +2084,48 @@ async function guardarProyecto(){
 
 // ── CARGAR PROYECTO ──
 async function cargarProyecto(id){
-  const url=getSheetDbUrl();
-  if(!url)return;
   if(!confirm('¿Abrir este proyecto? Los cambios no guardados se perderán.'))return;
   const saving=document.getElementById('proy-saving');
   if(saving){saving.textContent='Cargando...';saving.style.display='block';}
   try{
-    const res=await fetch(url+'/search?id='+id);
-    if(!res.ok)throw new Error('Error '+res.status);
-    const data=await res.json();
-    const arr=Array.isArray(data)?data:(data.data||[]);
-    if(!arr.length){showToast('No se encontró el proyecto');return;}
-    const p=arr[0];
-    const datos=JSON.parse(p.datos_json||'{}');
+    // 1. Buscar en localStorage primero
+    let p=dbLeer().find(x=>x.id===id);
+
+    // 2. Si no está en local, intentar SheetDB
+    if(!p){
+      const url=getSheetDbUrl();
+      if(url){
+        try{
+          const res=await fetch(url+'/search?id='+encodeURIComponent(id));
+          if(res.ok){
+            const data=await res.json();
+            const arr=Array.isArray(data)?data:(data.data||[]);
+            if(arr.length){p=arr[0];dbUpsert(p);}
+          }
+        }catch(e){console.warn('SheetDB fetch al cargar:',e.message);}
+      }
+    }
+
+    if(!p){showToast('No se encontró el proyecto');return;}
+
+    let datos={};
+    try{datos=JSON.parse(p.datos_json||'{}');}catch(e){console.warn('datos_json inválido',e);}
+
     // Reset completo
     document.querySelectorAll('.hoja input:not([readonly]),.hoja textarea').forEach(el=>el.value='');
     document.querySelectorAll('.tipo-chip.activo,.sub-item.activa,.tarea-grupo.activo,.medio-item.activo,.cb.marcado,.oculto-pdf').forEach(el=>el.classList.remove('activo','activa','marcado','oculto-pdf'));
-    document.getElementById('hon-bloques-container').innerHTML='<div style="padding:16px;font-size:9.5px;color:var(--gris-medio);font-style:italic;">Seleccioná las tareas encomendadas para completar los honorarios.</div>';
+    const hbc=document.getElementById('hon-bloques-container');
+    if(hbc)hbc.innerHTML='<div style="padding:16px;font-size:9.5px;color:var(--gris-medio);font-style:italic;">Seleccioná las tareas encomendadas para completar los honorarios.</div>';
     presupuestoGenerado=false;
-    proyectoIdActual=p.id; // Al cargar un proyecto, futuras guardadas lo actualizan
+    proyectoIdActual=p.id;
     deserializarFormulario(datos);
     cerrarPanelProyectos();
-    showToast('Proyecto cargado: '+p.numero);
+    showToast('Proyecto cargado: '+(p.numero||p.id));
   }catch(e){
     showToast('Error al cargar el proyecto.');
     console.error(e);
   }finally{
-    if(saving)saving.style.display='none';
+    if(saving){saving.textContent='Guardando...';saving.style.display='none';}
   }
 }
 
