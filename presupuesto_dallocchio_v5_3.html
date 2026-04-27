@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presupuesto — Estudio Dall'Occhio</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --negro:#1a1a1a;
+  --gris-oscuro:#3a3a3a;
+  --gris-medio:#888;
+  --gris-claro:#ddd;
+  --gris-fondo:#f4f4f4;
+  --beige:#C8B89A;
+  --beige-claro:#f0ebe3;
+  --beige-muy-claro:#faf8f5;
+  --verde:#3a7d4a;
+  --rojo:#8b3a3a;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Montserrat',sans-serif;background:#dedad4;color:var(--negro);padding:24px 16px;font-size:13px;}
+
+/* ══ TOOLBAR ══ */
+.toolbar{max-width:880px;margin:0 auto 12px;background:var(--negro);padding:8px 16px;border-radius:3px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.tb-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.tb-badge{font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);}
+.estado-grupo{display:flex;gap:3px;}
+.eb{padding:4px 10px;border:1px solid rgba(255,255,255,.15);background:none;font-family:'Montserrat',sans-serif;font-size:7.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4);cursor:pointer;transition:all .15s;}
+.eb:hover{border-color:var(--beige);color:var(--beige);}
+.eb.activo.borrador{background:var(--beige);border-color:var(--beige);color:var(--negro);}
+.eb.activo.enviado{background:white;border-color:white;color:var(--negro);}
+.eb.activo.aceptado{background:var(--verde);border-color:var(--verde);color:white;}
+.eb.activo.rechazado{background:var(--rojo);border-color:var(--rojo);color:white;}
+.eb.activo.vencido{background:var(--gris-medio);border-color:var(--gris-medio);color:white;}
+.tb-right{display:flex;gap:6px;}
+.btn-imprimir{padding:5px 14px;background:var(--beige);color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;}
+.btn-imprimir:hover{background:#b8a88a;}
+
+/* ══ HOJA ══ */
+.hoja{max-width:880px;margin:0 auto;background:white;box-shadow:0 4px 32px rgba(0,0,0,.18);padding:44px 52px;min-height:297mm;position:relative;overflow:hidden;}
+
+/* SELLO */
+.toast-msg{position:fixed;bottom:24px;right:24px;background:var(--negro);color:white;padding:10px 18px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:0;transition:opacity .3s;z-index:999;pointer-events:none;}
+.toast-msg.visible{opacity:1;}
+.sello-wrap{position:absolute;right:48px;bottom:120px;width:100px;height:100px;opacity:.18;display:none;pointer-events:none;z-index:10;transform:rotate(-25deg);}
+/* sello solo en print */
+.sello-circulo{fill:none;stroke-width:2;}
+.sello-circulo2{fill:none;stroke-width:1;}
+.sello-texto-diag{font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;letter-spacing:3px;text-anchor:middle;dominant-baseline:middle;}
+
+/* ══ ENCABEZADO ══ */
+.enc{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start;padding-bottom:16px;border-bottom:2px solid var(--negro);margin-bottom:18px;}
+.enc-nombre{font-size:18px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.enc-especialidades{font-size:8px;font-weight:500;text-transform:uppercase;letter-spacing:.16em;color:var(--gris-medio);margin-top:3px;min-height:13px;}
+.enc-mats{margin-top:7px;display:flex;flex-direction:column;gap:2px;}
+.enc-mat{font-size:8px;color:var(--gris-oscuro);letter-spacing:.05em;text-transform:uppercase;}
+.enc-contacto{text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end;}
+.enc-item{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--gris-oscuro);}
+.enc-icono{color:var(--beige);font-size:10px;width:13px;text-align:center;}
+.enc-ig{display:none;}
+.enc-ig.visible{display:flex;}
+.toggle-ig-btn{background:none;border:none;cursor:pointer;font-size:7.5px;color:var(--beige);font-family:'Montserrat',sans-serif;letter-spacing:.08em;text-transform:uppercase;text-decoration:underline;margin-top:1px;text-align:right;}
+
+/* ══ META ══ */
+.doc-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding:8px 13px;background:var(--gris-fondo);border-left:3px solid var(--beige);}
+.doc-nro{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.ni{border:none;border-bottom:1px solid var(--gris-claro);background:transparent;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-align:center;outline:none;color:var(--negro);padding:1px 2px;}
+.ni:focus{border-bottom-color:var(--beige);}
+.ni-pre{width:44px;}
+.ni-yr{width:42px;}
+.ni-num{width:30px;}
+.ni-rev{width:30px;}
+.doc-fecha{font-size:9px;color:var(--gris-medio);display:flex;align-items:center;gap:5px;}
+.fi{border:none;border-bottom:1px solid var(--gris-claro);background:transparent;font-family:'Montserrat',sans-serif;font-size:9px;width:88px;text-align:center;outline:none;color:var(--negro);padding:1px 2px;}
+.fi:focus{border-bottom-color:var(--beige);}
+
+/* ══ TÍTULO ══ */
+.titulo-doc{text-align:center;margin-bottom:12px;}
+.titulo-principal{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;}
+.titulo-sub{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--beige);margin-top:3px;min-height:14px;}
+
+/* TIPO SERVICIO */
+.tipo-servicio{display:flex;justify-content:center;gap:6px;margin-bottom:20px;flex-wrap:wrap;}
+.tipo-chip{display:flex;align-items:center;gap:5px;padding:4px 12px;border:1px solid var(--gris-claro);cursor:pointer;user-select:none;font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gris-medio);transition:all .15s;}
+.tipo-chip:hover{border-color:var(--beige);color:var(--negro);}
+.tipo-chip.activo{background:var(--negro);color:white;border-color:var(--negro);}
+.tc-box{width:9px;height:9px;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:6px;flex-shrink:0;}
+.tipo-chip.activo .tc-box::after{content:'✓';}
+
+/* ══ SECCIÓN ══ */
+.seccion{margin-bottom:20px;}
+.sec-label{font-size:7px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--beige);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--gris-claro);}
+.ojo{background:none;border:none;cursor:pointer;font-size:11px;padding:0;line-height:1;opacity:.55;transition:opacity .15s;flex-shrink:0;}
+.ojo:hover{opacity:1;}
+.oculto-pdf{opacity:.3;pointer-events:none;}
+
+/* ══ CAMPOS ══ */
+.campo-fila{display:grid;grid-template-columns:148px 1fr;align-items:baseline;gap:8px;padding:4px 0;border-bottom:1px solid #f0f0f0;}
+.campo-fila:last-child{border-bottom:none;}
+.campo-label{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--gris-medio);}
+.campo-valor{border:none;border-bottom:1px solid transparent;outline:none;font-family:'Montserrat',sans-serif;font-size:11px;color:var(--negro);background:transparent;width:100%;padding:2px 3px;transition:border-color .15s;}
+.campo-valor:focus{border-bottom-color:var(--beige);}
+.campo-valor::placeholder{color:var(--gris-claro);font-style:italic;}
+
+/* CATASTRAL */
+.catastral-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.cat-item{display:flex;flex-direction:column;gap:2px;}
+.cat-label{font-size:7px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gris-medio);}
+.cat-input{border:none;border-bottom:1px solid var(--gris-claro);outline:none;font-family:'Montserrat',sans-serif;font-size:11px;color:var(--negro);background:transparent;padding:2px 3px;text-align:center;width:100%;}
+.cat-input:focus{border-bottom-color:var(--beige);}
+
+/* ══ INDICADORES ══ */
+.ind-franja{border:1px solid var(--gris-claro);overflow:hidden;}
+.ind-grid{display:grid;grid-template-columns:repeat(4,1fr);}
+.ind-celda{padding:5px 7px;border-right:1px solid var(--gris-claro);text-align:center;}
+.ind-celda:last-child{border-right:none;}
+.ind-label{font-size:6.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--beige);margin-bottom:2px;}
+.ind-input{border:none;outline:none;font-family:'Montserrat',sans-serif;font-size:11px;color:var(--negro);background:transparent;text-align:center;width:100%;border-bottom:1px solid transparent;}
+.ind-input:focus{border-bottom-color:var(--beige);}
+.ind-input::placeholder{color:var(--gris-claro);}
+.ind-unidad{font-size:6px;color:var(--gris-medio);margin-top:1px;}
+
+/* ══ SUPERFICIES ══ */
+.sup-controles{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+.sup-toggle{display:flex;align-items:center;gap:4px;padding:3px 9px;border:1px solid var(--gris-claro);cursor:pointer;user-select:none;font-size:8px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-medio);transition:all .15s;}
+.sup-toggle:hover{border-color:var(--beige);}
+.sup-toggle.activo{background:var(--negro);color:white;border-color:var(--negro);}
+.stb{width:9px;height:9px;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:6px;flex-shrink:0;}
+.sup-toggle.activo .stb::after{content:'✓';}
+.sup-bloque{margin-bottom:8px;}
+.sup-bloque-label{font-size:7.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gris-medio);margin-bottom:5px;}
+.sup-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.sup-item{padding:8px 10px;border:1px solid var(--gris-claro);text-align:center;}
+.sup-item-label{font-size:7px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gris-medio);margin-bottom:4px;}
+.sup-input{border:none;border-bottom:1px solid var(--gris-claro);outline:none;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:300;color:var(--negro);background:transparent;text-align:center;width:100%;}
+.sup-input:focus{border-bottom-color:var(--beige);}
+.sup-unidad{font-size:7px;color:var(--gris-medio);margin-top:2px;}
+.sup-total{background:var(--negro);}
+.sup-total .sup-item-label{color:rgba(255,255,255,.5);}
+.sup-total .sup-input{color:white;border-bottom-color:var(--beige);}
+.sup-total .sup-unidad{color:rgba(255,255,255,.4);}
+.sup-baldio{font-size:9px;font-style:italic;color:var(--gris-medio);padding:8px 0;}
+
+/* ══ TAREAS ══ */
+.tareas-selector{display:flex;flex-direction:column;gap:3px;}
+.tarea-grupo{border:1px solid var(--gris-claro);}
+.tgh{display:flex;align-items:center;gap:9px;padding:9px 12px;cursor:pointer;background:var(--gris-fondo);user-select:none;transition:background .15s;}
+.tgh:hover{background:var(--beige-claro);}
+.tgc{width:14px;height:14px;border:2px solid var(--gris-claro);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.tarea-grupo.activo .tgc{background:var(--beige);border-color:var(--beige);}
+.tarea-grupo.activo .tgc::after{content:'✓';color:white;font-size:8px;font-weight:700;}
+.tgn{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
+.tarea-subs{display:none;padding:8px 12px;border-top:1px solid var(--gris-claro);background:white;gap:3px;flex-direction:column;}
+.tarea-grupo.activo .tarea-subs{display:flex;}
+.sub-item{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 7px;user-select:none;transition:background .15s;}
+.sub-item:hover{background:var(--beige-muy-claro);}
+.sc{width:12px;height:12px;border:1px solid var(--gris-claro);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.sub-item.activa .sc{background:var(--negro);border-color:var(--negro);}
+.sub-item.activa .sc::after{content:'✓';color:white;font-size:7px;}
+.sn{font-size:10px;font-weight:500;color:var(--gris-oscuro);}
+.sub-item.activa .sn{color:var(--negro);}
+.otros-input{display:none;border:none;border-bottom:1px solid var(--gris-claro);outline:none;font-family:'Montserrat',sans-serif;font-size:10px;color:var(--negro);background:transparent;width:100%;}
+.sub-item.activa .otros-input{display:block;}
+.sub-item.activa .otros-label{display:none;}
+
+/* ══ DESCRIPCIÓN ══ */
+.desc-area{border:1px solid var(--gris-claro);outline:none;font-family:'Montserrat',sans-serif;font-size:10px;color:var(--negro);background:transparent;width:100%;padding:9px;resize:vertical;min-height:55px;line-height:1.7;}
+.desc-area:focus{border-color:var(--beige);}
+
+/* ══ DOCUMENTACIÓN ══ */
+.doc-master-toggle{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:7px 10px;background:var(--gris-fondo);border-left:3px solid var(--gris-claro);cursor:pointer;user-select:none;transition:all .15s;}
+.doc-master-toggle.activo{border-left-color:var(--beige);}
+.dmt-check{width:13px;height:13px;border:1px solid var(--gris-claro);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.doc-master-toggle.activo .dmt-check{background:var(--negro);border-color:var(--negro);}
+.doc-master-toggle.activo .dmt-check::after{content:'✓';color:white;font-size:7px;}
+.dmt-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--gris-medio);}
+.doc-master-toggle.activo .dmt-label{color:var(--negro);}
+.checklist-titulo{font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--gris-medio);margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid var(--gris-claro);}
+.checklist-org{margin-bottom:8px;}
+.org-btn{display:flex;align-items:center;justify-content:space-between;padding:6px 11px;background:var(--gris-fondo);border:1px solid var(--gris-claro);cursor:pointer;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--negro);user-select:none;width:100%;font-family:'Montserrat',sans-serif;transition:background .15s;}
+.org-btn:hover{background:var(--beige-claro);}
+.org-flecha{font-size:8px;transition:transform .2s;}
+.org-btn.abierto .org-flecha{transform:rotate(180deg);}
+.org-contenido{display:none;border:1px solid var(--gris-claro);border-top:none;}
+.org-contenido.visible{display:block;}
+.subtipo-label{font-size:7.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--beige);padding:6px 11px 2px;background:var(--beige-muy-claro);}
+.check-header{display:grid;grid-template-columns:1fr 54px;gap:6px;padding:3px 11px;background:var(--negro);}
+.ch-left{font-size:7px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);}
+.ch-right{display:grid;grid-template-columns:1fr 1fr;gap:3px;text-align:center;}
+.ch-right span{font-size:7px;font-weight:700;color:var(--beige);}
+.check-item{display:grid;grid-template-columns:1fr 54px;align-items:center;gap:6px;padding:4px 11px;border-bottom:1px solid #f2f2f2;font-size:9px;color:var(--gris-oscuro);line-height:1.4;}
+.check-item:last-child{border-bottom:none;}
+.check-item em{font-style:normal;font-size:8px;color:var(--gris-medio);display:block;}
+.check-cols{display:grid;grid-template-columns:1fr 1fr;gap:3px;text-align:center;}
+.cb{width:14px;height:14px;border:1px solid var(--gris-claro);cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto;transition:all .15s;}
+.cb.marcado{background:var(--negro);border-color:var(--negro);}
+.cb.marcado::after{content:'✓';color:white;font-size:7px;font-weight:700;}
+.check-nota{padding:6px 11px;font-size:8px;font-style:italic;color:var(--gris-medio);background:var(--beige-muy-claro);border-top:1px solid var(--gris-claro);line-height:1.5;}
+
+/* ══ HONORARIOS ══ */
+.hon-tabs{display:flex;border-bottom:2px solid var(--negro);}
+.hon-tab{padding:8px 16px;font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;border:none;background:var(--gris-fondo);color:var(--gris-medio);font-family:'Montserrat',sans-serif;border-top:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.hon-tab.activa{background:white;color:var(--negro);border-top-color:var(--beige);}
+.hon-panel{display:none;border:1px solid var(--gris-claro);border-top:none;}
+.hon-panel.visible{display:block;}
+
+/* Bloque por tarea */
+.hon-bloque{padding:14px 16px;border-bottom:1px solid var(--gris-claro);}
+.hon-bloque:last-of-type{border-bottom:none;}
+.hon-bloque-titulo{font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--beige);margin-bottom:10px;}
+
+/* Monto */
+.hon-monto-row{display:flex;align-items:baseline;gap:8px;margin-bottom:6px;}
+.hon-signo{font-size:16px;font-weight:300;color:var(--gris-medio);}
+.hon-monto-input{border:none;border-bottom:2px solid var(--beige);outline:none;font-family:'Montserrat',sans-serif;font-size:22px;font-weight:400;color:var(--negro);background:transparent;width:200px;padding:3px;}
+.hon-monto-input::placeholder{color:var(--gris-claro);}
+.hon-por-mes{font-size:10px;color:var(--gris-medio);align-self:center;}
+.hon-letras{font-size:8.5px;font-style:italic;color:var(--gris-medio);min-height:15px;margin-bottom:8px;}
+
+/* Cuotas dirección */
+.hon-cuotas-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:8px 10px;background:var(--gris-fondo);}
+.hon-cuotas-label{font-size:8.5px;color:var(--gris-oscuro);}
+.hon-cuotas-n{border:none;border-bottom:1px solid var(--beige);outline:none;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:500;color:var(--negro);background:transparent;width:40px;text-align:center;}
+.hon-cuota-valor{font-size:11px;font-weight:600;color:var(--negro);margin-left:4px;}
+
+/* Unidad */
+.hon-unidad-row{display:flex;gap:4px;margin-bottom:8px;}
+.uc{padding:3px 9px;border:1px solid var(--gris-claro);font-size:8px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;user-select:none;color:var(--gris-medio);transition:all .15s;}
+.uc:hover{border-color:var(--beige);}
+.uc.activo{background:var(--negro);color:white;border-color:var(--negro);}
+.hon-dolar-ref{display:none;font-size:8.5px;color:var(--gris-medio);font-style:italic;margin-bottom:8px;align-items:center;gap:6px;}
+.hon-dolar-ref.visible{display:flex;}
+.hon-dolar-ref input{border:none;border-bottom:1px solid var(--gris-claro);outline:none;font-family:'Montserrat',sans-serif;font-size:9px;color:var(--negro);background:transparent;width:190px;padding:1px 2px;}
+
+/* Forma de pago */
+.hon-pago-label{font-size:7.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gris-medio);margin-bottom:5px;}
+.hon-pago-opts{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
+.hpc{padding:3px 9px;border:1px solid var(--gris-claro);font-size:8px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;user-select:none;color:var(--gris-medio);transition:all .15s;}
+.hpc:hover{border-color:var(--beige);}
+.hpc.activo{background:var(--negro);color:white;border-color:var(--negro);}
+.hon-pago-elegido{display:none;font-size:9.5px;font-weight:600;color:var(--negro);padding:6px 10px;background:var(--gris-fondo);border-left:2px solid var(--beige);margin-bottom:6px;justify-content:space-between;align-items:center;}
+.hon-pago-elegido.visible{display:flex;}
+.hon-cambiar{background:none;border:none;font-family:'Montserrat',sans-serif;font-size:7.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--beige);cursor:pointer;text-decoration:underline;}
+
+/* Ajuste CAC toggle */
+.ajuste-toggle{display:flex;align-items:center;gap:7px;margin-top:6px;cursor:pointer;user-select:none;}
+.atc{width:12px;height:12px;border:1px solid var(--gris-claro);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.ajuste-toggle.activo .atc{background:var(--negro);border-color:var(--negro);}
+.ajuste-toggle.activo .atc::after{content:'✓';color:white;font-size:7px;}
+.ajuste-toggle .at-label{font-size:8.5px;color:var(--gris-oscuro);}
+.ajuste-toggle.activo .at-label{color:var(--negro);}
+.ajuste-detalle{display:none;padding:8px 10px;background:var(--gris-fondo);border-left:2px solid var(--beige);margin-top:5px;}
+.ajuste-toggle.activo+.ajuste-detalle{display:block;}
+.ad-fila{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:9px;}
+.ad-fila:last-child{margin-bottom:0;}
+.ad-label{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-medio);min-width:100px;}
+.ad-fila input{border:none;border-bottom:1px solid var(--gris-claro);outline:none;font-family:'Montserrat',sans-serif;font-size:10px;color:var(--negro);background:transparent;width:130px;}
+.ad-fila input:focus{border-bottom-color:var(--beige);}
+
+/* Total honorarios */
+.hon-total-barra{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:var(--negro);}
+.hon-total-label{font-size:7.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);}
+.hon-total-valor{font-size:16px;font-weight:400;color:white;letter-spacing:.02em;}
+
+/* Cláusula gas/osm */
+.clausula-deslinde{margin-top:12px;padding:10px 13px;background:var(--beige-muy-claro);border-left:3px solid var(--beige);font-size:8.5px;color:var(--gris-oscuro);line-height:1.7;font-style:italic;}
+
+/* ══ GASTOS ══ */
+.gastos-toggle{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--gris-fondo);border-left:3px solid var(--gris-claro);cursor:pointer;user-select:none;transition:all .15s;margin-bottom:8px;}
+.gastos-toggle.activo{border-left-color:var(--beige);}
+.gt-check{width:13px;height:13px;border:1px solid var(--gris-claro);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.gastos-toggle.activo .gt-check{background:var(--negro);border-color:var(--negro);}
+.gastos-toggle.activo .gt-check::after{content:'✓';color:white;font-size:7px;}
+.gt-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--gris-medio);}
+.gastos-toggle.activo .gt-label{color:var(--negro);}
+.gastos-contenido{display:none;}
+.gastos-toggle.activo+.gastos-contenido{display:block;}
+.gastos-placeholder{font-size:9px;color:var(--gris-medio);font-style:italic;padding:6px 0;}
+
+/* ══ FORMA DE PAGO ══ */
+.medios-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center;}
+.medio-item{display:flex;align-items:center;gap:7px;padding:6px 12px;border:1px solid var(--gris-claro);cursor:pointer;user-select:none;transition:all .15s;}
+.medio-item:hover{border-color:var(--beige);}
+.medio-item.activo{border-color:var(--negro);background:var(--gris-fondo);}
+.mch{width:13px;height:13px;border:1px solid var(--gris-claro);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.medio-item.activo .mch{background:var(--beige);border-color:var(--beige);}
+.medio-item.activo .mch::after{content:'✓';color:white;font-size:7px;}
+.medio-nombre{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-oscuro);}
+.medio-item.activo .medio-nombre{color:var(--negro);}
+.pago-datos{padding:9px 11px;background:var(--gris-fondo);font-size:9px;color:var(--gris-oscuro);line-height:1.9;}
+
+/* ══ CONDICIONES ══ */
+.cond-textarea{border:1px solid var(--gris-claro);outline:none;font-family:'Montserrat',sans-serif;font-size:9px;color:var(--gris-oscuro);background:transparent;width:100%;padding:9px;resize:vertical;min-height:50px;line-height:1.8;}
+.cond-textarea:focus{border-color:var(--beige);}
+.cond-opciones{margin-top:8px;display:flex;flex-direction:column;gap:3px;}
+.cond-toggle{display:flex;align-items:center;gap:7px;padding:5px 0;cursor:pointer;user-select:none;}
+.ctc{width:13px;height:13px;border:1px solid var(--gris-claro);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.cond-toggle.activo .ctc{background:var(--negro);border-color:var(--negro);}
+.cond-toggle.activo .ctc::after{content:'✓';color:white;font-size:7px;}
+.ct-label{font-size:9px;font-weight:500;color:var(--gris-oscuro);}
+.cond-toggle.activo .ct-label{color:var(--negro);}
+.cond-detalle{display:none;padding:8px 10px;background:var(--gris-fondo);border-left:2px solid var(--beige);margin-bottom:4px;}
+.cond-toggle.activo+.cond-detalle{display:block;}
+.cdf{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.cdf:last-child{margin-bottom:0;}
+.cdl{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-medio);min-width:110px;}
+.cdf input{border:none;border-bottom:1px solid var(--gris-claro);outline:none;font-family:'Montserrat',sans-serif;font-size:10px;color:var(--negro);background:transparent;width:130px;}
+.cdf input:focus{border-bottom-color:var(--beige);}
+.cond-resultado{font-size:8.5px;color:var(--gris-medio);font-style:italic;margin-top:4px;line-height:1.5;}
+.cond-validez{display:flex;align-items:center;gap:8px;margin-top:8px;padding:7px 10px;background:var(--gris-fondo);}
+.cv-label{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--gris-medio);}
+.cv-input{border:none;border-bottom:1px solid var(--gris-claro);outline:none;font-family:'Montserrat',sans-serif;font-size:10px;color:var(--negro);background:transparent;width:90px;padding:1px 3px;}
+.cond-fiscal{margin-top:7px;padding:7px 11px;background:var(--gris-fondo);font-size:8px;color:var(--gris-oscuro);letter-spacing:.06em;text-transform:uppercase;font-weight:500;}
+
+/* ══ OBSERVACIONES ══ */
+.obs-area{border:1px solid var(--gris-claro);outline:none;font-family:'Montserrat',sans-serif;font-size:9px;color:var(--negro);background:transparent;width:100%;padding:9px;resize:vertical;min-height:45px;line-height:1.7;}
+.obs-area:focus{border-color:var(--beige);}
+
+/* ══ FIRMA ══ */
+.firma-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:32px;padding-top:16px;border-top:1px solid var(--gris-claro);}
+.firma-item{text-align:center;}
+.firma-linea{border-top:1px solid var(--negro);margin-bottom:5px;padding-top:5px;}
+.firma-nombre{font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gris-oscuro);margin-bottom:5px;}
+.firma-lf{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:3px;}
+.firma-lf .fl-label{font-size:7.5px;color:var(--gris-medio);text-transform:uppercase;letter-spacing:.08em;}
+.firma-lf input{border:none;border-bottom:1px solid var(--gris-claro);outline:none;font-family:'Montserrat',sans-serif;font-size:9px;color:var(--negro);background:transparent;width:110px;text-align:center;}
+
+/* ══ BLOQUE SOLO PROFESIONAL ══ */
+.solo-pro{background:#fff9f2;border:1.5px dashed var(--beige);padding:16px;margin-top:18px;}
+.sp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.sp-badge{font-size:7px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--beige);}
+.sp-version-row{display:flex;align-items:center;gap:8px;font-size:8px;color:var(--gris-medio);}
+.sp-version-row input{border:none;border-bottom:1px solid var(--gris-claro);outline:none;font-family:'Montserrat',sans-serif;font-size:9px;color:var(--negro);background:transparent;width:50px;text-align:center;}
+.sp-sublabel{font-size:7.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gris-medio);margin-bottom:7px;margin-top:14px;}
+.sp-sublabel:first-of-type{margin-top:0;}
+
+/* CAPBA */
+.capba-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:8px;}
+.capba-fila{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:white;border:1px solid var(--gris-claro);font-size:9px;}
+.capba-label{color:var(--gris-oscuro);}
+.capba-input{border:none;border-bottom:1px solid var(--gris-claro);outline:none;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;color:var(--negro);background:transparent;width:80px;text-align:right;}
+.capba-input:focus{border-bottom-color:var(--beige);}
+.capba-sfx{font-size:8.5px;color:var(--gris-medio);margin-left:2px;}
+.capba-resultado{background:var(--negro);color:white;padding:9px 13px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.rb-label{font-size:7.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.6;}
+.rb-valor{font-size:14px;font-weight:300;}
+.capba-nota{padding:8px 12px;background:var(--beige-muy-claro);border-left:3px solid var(--beige);font-size:8px;font-style:italic;color:var(--gris-medio);line-height:1.7;}
+
+/* CALCULADORA CAC */
+.cac-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:8px;}
+.cac-celda{border:1px solid var(--gris-claro);padding:7px 9px;text-align:center;background:white;}
+.cac-clabel{font-size:7px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gris-medio);margin-bottom:4px;}
+.cac-input{border:none;outline:none;font-family:'Montserrat',sans-serif;font-size:15px;font-weight:300;color:var(--negro);background:transparent;text-align:center;width:100%;border-bottom:1px solid transparent;}
+.cac-input:focus{border-bottom-color:var(--beige);}
+.cac-coef-val{color:var(--beige);font-weight:600;}
+.cac-saldo-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px 10px;background:white;border:1px solid var(--gris-claro);}
+.cac-saldo-label{font-size:8.5px;color:var(--gris-oscuro);flex:1;}
+.cac-saldo-input{border:none;border-bottom:1px solid var(--gris-claro);outline:none;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:500;color:var(--negro);background:transparent;width:130px;text-align:right;}
+.cac-saldo-input:focus{border-bottom-color:var(--beige);}
+.cac-tipo-row{display:flex;gap:4px;margin-bottom:8px;}
+.cac-tipo-chip{padding:3px 9px;border:1px solid var(--gris-claro);font-size:7.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;user-select:none;color:var(--gris-medio);transition:all .15s;}
+.cac-tipo-chip:hover{border-color:var(--beige);}
+.cac-tipo-chip.activo{background:var(--negro);color:white;border-color:var(--negro);}
+.cac-provisorio{display:flex;align-items:center;gap:6px;margin-bottom:8px;cursor:pointer;user-select:none;}
+.cac-prov-check{width:12px;height:12px;border:1px solid var(--gris-claro);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.cac-provisorio.activo .cac-prov-check{background:var(--beige);border-color:var(--beige);}
+.cac-provisorio.activo .cac-prov-check::after{content:'✓';color:white;font-size:7px;}
+.cac-prov-label{font-size:8px;color:var(--gris-medio);}
+.cac-resultado{background:var(--negro);color:white;padding:9px 13px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.cac-historial{margin-top:8px;}
+.cac-hist-label{font-size:7.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gris-medio);margin-bottom:5px;}
+.cac-hist-tabla{width:100%;border-collapse:collapse;font-size:8.5px;}
+.cac-hist-tabla th{background:var(--negro);color:rgba(255,255,255,.6);padding:4px 8px;text-align:left;font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:7.5px;}
+.cac-hist-tabla td{padding:4px 8px;border-bottom:1px solid #f0f0f0;color:var(--gris-oscuro);}
+.cac-hist-tabla tr:last-child td{border-bottom:none;}
+.cac-prov-aviso{display:none;padding:5px 8px;background:#fff3cd;border-left:2px solid #f0c040;font-size:8px;color:#856404;margin-top:5px;}
+.cac-provisorio.activo~.cac-prov-aviso{display:block;}
+
+/* Observaciones internas */
+.obs-internas{display:flex;flex-direction:column;gap:6px;}
+.obs-int-item{background:white;border:1px solid var(--gris-claro);padding:8px 10px;}
+.obs-int-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;flex-wrap:wrap;gap:5px;}
+.obs-int-titulo{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gris-oscuro);}
+.obs-int-right{display:flex;align-items:center;gap:8px;}
+.obs-est-grupo{display:flex;gap:3px;}
+.obs-est-btn{padding:2px 7px;border:1px solid var(--gris-claro);font-family:'Montserrat',sans-serif;font-size:7px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;color:var(--gris-medio);background:none;transition:all .15s;}
+.obs-est-btn.activo.pendiente{background:#fff3cd;border-color:#f0c040;color:#856404;}
+.obs-est-btn.activo.resuelto{background:#d1e7dd;border-color:var(--verde);color:var(--verde);}
+.obs-int-fecha{font-size:7.5px;color:var(--gris-medio);}
+.obs-int-texto{border:none;border-bottom:1px solid var(--gris-claro);outline:none;font-family:'Montserrat',sans-serif;font-size:9px;color:var(--negro);background:transparent;width:100%;padding:2px;resize:none;height:32px;line-height:1.5;}
+.obs-int-texto:focus{border-bottom-color:var(--beige);}
+
+.sep{border:none;border-top:1px solid var(--gris-claro);margin:16px 0;}
+
+/* ══ PRINT ══ */
+@media print{
+  body{background:white;padding:0;}
+
+  /* Ocultar elementos de interfaz */
+  .toolbar,.solo-pro,.ojo,.hon-cambiar,.toggle-ig-btn,
+  .ajuste-toggle,.cond-toggle,.doc-master-toggle,.gastos-toggle,
+  .tipo-chip .tc-box,.hon-tabs,.hon-tab,.eb{display:none!important;}
+
+  .hoja{box-shadow:none;padding:18mm 20mm;}
+
+  /* Secciones ocultas por ojo */
+  .oculto-pdf{display:none!important;}
+
+  /* Acordeones: solo mostrar los abiertos */
+  .org-contenido:not(.visible){display:none!important;}
+
+  /* Documentación: solo si está activada */
+  #doc-contenido[style*="none"]{display:none!important;}
+
+  /* Gastos: solo si está activado */
+  .gastos-contenido{display:none!important;}
+
+  /* Tareas: ocultar grupos no activos y subtareas no tildadas */
+  .tarea-grupo:not(.activo){display:none!important;}
+  .tarea-subs{display:block!important;}
+  .sub-item:not(.activa){display:none!important;}
+
+  /* Tipo servicio: ocultar chips no activos */
+  .tipo-chip:not(.activo){display:none!important;}
+
+  /* Honorarios: ocultar panel CAPBA */
+  #hon-capba{display:none!important;}
+  #hon-publico{display:block!important;border:none!important;}
+
+  /* Ajuste CAC: ocultar toggle pero mostrar detalle si está activo */
+  .ajuste-detalle{display:none!important;}
+  .ajuste-toggle.activo + .ajuste-detalle{display:block!important;}
+
+  /* Condiciones: ocultar toggles pero mostrar detalles activos */
+  .cond-detalle{display:none!important;}
+  .cond-toggle.activo + .cond-detalle{display:block!important;}
+
+  /* Cláusula deslinde: solo si visible */
+  #clausula-deslinde[style*="none"]{display:none!important;}
+
+  /* Documentación: ocultar columnas Cliente/Yo en PDF */
+  .check-header,.ch-right,.check-cols{display:none!important;}
+  .check-item{grid-template-columns:1fr!important;}
+
+  /* Superficies: ocultar bloques no activos */
+  .sup-bloque{display:none!important;}
+  .sup-toggle.activo + .sup-bloque,
+  #sup-baldio{display:block!important;}
+
+  /* Bloque solo profesional: nunca */
+  .solo-pro{display:none!important;}
+
+  /* Indicadores: solo si no están ocultos */
+  #bloque-indicadores.oculto-pdf{display:none!important;}
+
+  /* Pago: ocultar opciones no elegidas */
+  .hon-pago-opts{display:none!important;}
+  .hon-pago-elegido.visible{display:flex!important;}
+}
+</style>
+</head>
+<body>
+
+<div class="toast-msg" id="toast-msg"></div>
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="tb-left">
+    <span class="tb-badge">🔒 Vista profesional</span>
+    <div class="estado-grupo">
+      <button class="eb borrador activo" onclick="setEstado(this,'borrador')">Borrador</button>
+      <button class="eb enviado" onclick="setEstado(this,'enviado')">Enviado</button>
+      <button class="eb aceptado" onclick="setEstado(this,'aceptado')">Aceptado</button>
+      <button class="eb rechazado" onclick="setEstado(this,'rechazado')">Rechazado</button>
+      <button class="eb vencido" onclick="setEstado(this,'vencido')">Vencido</button>
+    </div>
+  </div>
+  <div class="tb-right">
+    <button class="btn-nuevo" id="btn-nuevo" onclick="nuevoPresupuesto()" style="padding:5px 12px;background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">+ Nuevo</button><button class="btn-imprimir" id="btn-generar" onclick="generarPresupuesto()" style="padding:5px 14px;background:var(--beige);color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Generar presupuesto</button><button class="btn-imprimir" id="btn-imprimir-real" onclick="window.print()" style="display:none;padding:5px 14px;background:white;color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Imprimir / PDF</button>
+  </div>
+</div>
+
+<div class="hoja" id="hoja">
+
+  <!-- SELLO -->
+  <div class="sello-wrap" id="sello">
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle class="sello-circulo" cx="50" cy="50" r="46" id="sc1"/>
+      <circle class="sello-circulo2" cx="50" cy="50" r="40" id="sc2"/>
+      <text class="sello-texto-diag" x="50" y="50" id="sello-txt" transform="rotate(-20,50,50)">ENVIADO</text>
+    </svg>
+  </div>
+
+  <!-- ENCABEZADO -->
+  <div class="enc">
+    <div>
+      <div class="enc-nombre">Arq. Carina Dall'Occhio</div>
+      <div class="enc-especialidades" id="enc-esp">Arquitectura · Instalaciones de Gas · Obras Sanitarias</div>
+      <div class="enc-mats">
+        <div class="enc-mat">Mat. Arq. Prov. Bs. As. N° 21008</div>
+        <div class="enc-mat">Mat. Inst. Gas N° 70234453 · Cat. 1</div>
+        <div class="enc-mat">Mat. Inst. Sanitarias · <em style="font-style:italic;color:var(--gris-medio)">pendiente</em></div>
+      </div>
+    </div>
+    <div class="enc-contacto">
+      <div class="enc-item"><span class="enc-icono">📍</span><span>25 de Mayo 456, Junín, Bs. As.</span></div>
+      <div class="enc-item"><span class="enc-icono">📱</span><span>2364 694245</span></div>
+      <div class="enc-item"><span class="enc-icono">✉</span><span><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="0c6f6d7e65626d686d60604c6b616d6560226f6361">[email&#160;protected]</a></span></div>
+      <div class="enc-item enc-ig" id="enc-ig"><span class="enc-icono">📷</span><span id="ig-texto">@ig_profesional</span></div>
+      <button class="toggle-ig-btn" onclick="toggleIG()" id="btn-ig">+ Activar Instagram</button>
+    </div>
+  </div>
+
+  <!-- NRO Y FECHA -->
+  <div class="doc-meta">
+    <div class="doc-nro">
+      N°
+      <span id="nro-pendiente" style="font-size:8.5px;color:var(--gris-medio);font-style:italic;">— pendiente de generación —</span>
+      <span id="nro-campos" style="display:none;gap:5px;align-items:center;">
+        <input class="ni ni-pre" id="ni-pre" type="text" readonly style="width:44px;">
+        ·
+        <input class="ni ni-yr" id="ni-yr" type="text" readonly style="width:42px;">
+        ·
+        <input class="ni ni-num" id="ni-num" type="text" readonly style="width:30px;">
+        <span style="color:var(--gris-medio);font-size:8px;margin-left:4px;">Rev.</span>
+        <input class="ni ni-rev" id="ni-rev" type="text" value="1" style="width:30px;">
+      </span>
+    </div>
+    <div class="doc-fecha">
+      <span>Junín,</span>
+      <input class="fi" id="fecha-doc" type="text" placeholder="DD/MM/AAAA" maxlength="10" oninput="autoFecha(this)">
+    </div>
+  </div>
+
+  <!-- TÍTULO -->
+  <div class="titulo-doc">
+    <div class="titulo-principal">Presupuesto de Honorarios Profesionales</div>
+    <div class="titulo-sub" id="titulo-sub">—</div>
+  </div>
+
+  <!-- TIPO SERVICIO -->
+  <div class="tipo-servicio">
+    <div class="tipo-chip" onclick="toggleTipo(this,'Arquitectura')"><div class="tc-box"></div>Arquitectura</div>
+    <div class="tipo-chip" onclick="toggleTipo(this,'Instalaciones de Gas')"><div class="tc-box"></div>Instalaciones de Gas</div>
+    <div class="tipo-chip" onclick="toggleTipo(this,'Obras Sanitarias')"><div class="tc-box"></div>Obras Sanitarias</div>
+  </div>
+
+  <!-- COMITENTE -->
+  <div class="seccion">
+    <div class="sec-label">Datos del comitente</div>
+    <div class="campo-fila"><div class="campo-label">Apellido y nombre</div><input class="campo-valor" type="text" placeholder="Apellido y nombre completo"></div>
+    <div class="campo-fila"><div class="campo-label">DNI / CUIT</div><input class="campo-valor" type="text" placeholder="N° de documento o CUIT"></div>
+    <div class="campo-fila"><div class="campo-label">Condición IVA</div><input class="campo-valor" type="text" placeholder="Ej: Responsable Inscripto / Consumidor Final"></div>
+    <div class="campo-fila"><div class="campo-label">Domicilio</div><input class="campo-valor" type="text" placeholder="Calle, número"></div>
+    <div class="campo-fila"><div class="campo-label">Localidad</div><input class="campo-valor" type="text" placeholder="Localidad"></div>
+    <div class="campo-fila"><div class="campo-label">Teléfono / Email</div><input class="campo-valor" type="text" placeholder="Contacto"></div>
+  </div>
+
+  <!-- PARCELA -->
+  <div class="seccion">
+    <div class="sec-label">
+      Datos de la parcela
+      <button class="ojo" id="ojo-parcela" onclick="toggleOjo('parcela')" title="Mostrar/ocultar en PDF">👁</button>
+    </div>
+    <div id="bloque-parcela">
+      <div class="campo-fila"><div class="campo-label">Partida inmobiliaria</div><input class="campo-valor" type="text" placeholder="N° de partida"></div>
+      <div class="campo-fila">
+        <div class="campo-label">Nomenclatura catastral</div>
+        <div class="catastral-grid">
+          <div class="cat-item"><div class="cat-label">Circ.</div><input class="cat-input" type="text"></div>
+          <div class="cat-item"><div class="cat-label">Secc.</div><input class="cat-input" type="text"></div>
+          <div class="cat-item"><div class="cat-label">Manz.</div><input class="cat-input" type="text"></div>
+          <div class="cat-item"><div class="cat-label">Parc.</div><input class="cat-input" type="text"></div>
+        </div>
+      </div>
+      <div class="campo-fila"><div class="campo-label">Dirección de la obra</div><input class="campo-valor" type="text" placeholder="Calle, número"></div>
+      <div class="campo-fila"><div class="campo-label">Localidad de la obra</div><input class="campo-valor" type="text" placeholder="Localidad donde se ubica la obra"></div>
+      <div class="campo-fila"><div class="campo-label">Sup. terreno</div><input class="campo-valor" type="text" placeholder="m²" style="max-width:90px;"></div>
+    </div>
+  </div>
+
+  <!-- INDICADORES — solo arquitectura -->
+  <div class="seccion" id="bloque-indicadores" style="display:none;">
+    <div class="sec-label">
+      Indicadores urbanísticos
+      <button class="ojo" id="ojo-indicadores" onclick="toggleOjo('indicadores')" title="Mostrar/ocultar en PDF">👁</button>
+    </div>
+    <div id="contenido-indicadores">
+      <div class="ind-franja">
+        <div class="ind-grid">
+          <div class="ind-celda"><div class="ind-label">Zona</div><input class="ind-input" type="text" placeholder="—"><div class="ind-unidad">&nbsp;</div></div>
+          <div class="ind-celda"><div class="ind-label">FOS</div><input class="ind-input" type="text" placeholder="0.00"><div class="ind-unidad">Factor Ocup. Suelo</div></div>
+          <div class="ind-celda"><div class="ind-label">FOT</div><input class="ind-input" type="text" placeholder="0.00"><div class="ind-unidad">Factor Ocup. Total</div></div>
+          <div class="ind-celda"><div class="ind-label">Densidad</div><input class="ind-input" type="text" placeholder="0"><div class="ind-unidad">hab/ha</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUPERFICIES — solo arquitectura -->
+  <div class="seccion" id="bloque-superficies" style="display:none;">
+    <div class="sec-label">Superficies</div>
+    <div class="sup-controles">
+      <div class="sup-toggle" onclick="toggleSup(this,'proy')"><div class="stb"></div>Proyectada</div>
+      <div class="sup-toggle" onclick="toggleSup(this,'exist')"><div class="stb"></div>Existente</div>
+      <div class="sup-toggle" onclick="toggleSup(this,'dem')"><div class="stb"></div>A demoler</div>
+      <div class="sup-toggle activo" id="t-baldio" onclick="toggleBaldio(this)"><div class="stb"></div>Lote baldío</div>
+    </div>
+    <div id="sup-proy" style="display:none;" class="sup-bloque"><div class="sup-bloque-label">Proyectada</div><div class="sup-grid"><div class="sup-item"><div class="sup-item-label">Cubierta</div><input class="sup-input" type="number" placeholder="0" oninput="calcSup('proy',this)"><div class="sup-unidad">m²</div></div><div class="sup-item"><div class="sup-item-label">Semicubierta</div><input class="sup-input" type="number" placeholder="0" oninput="calcSup('proy',this)"><div class="sup-unidad">m²</div></div><div class="sup-item sup-total"><div class="sup-item-label">Total</div><input class="sup-input" id="tot-proy" readonly placeholder="—"><div class="sup-unidad">m²</div></div></div></div>
+    <div id="sup-exist" style="display:none;" class="sup-bloque"><div class="sup-bloque-label">Existente</div><div class="sup-grid"><div class="sup-item"><div class="sup-item-label">Cubierta</div><input class="sup-input" type="number" placeholder="0" oninput="calcSup('exist',this)"><div class="sup-unidad">m²</div></div><div class="sup-item"><div class="sup-item-label">Semicubierta</div><input class="sup-input" type="number" placeholder="0" oninput="calcSup('exist',this)"><div class="sup-unidad">m²</div></div><div class="sup-item sup-total"><div class="sup-item-label">Total</div><input class="sup-input" id="tot-exist" readonly placeholder="—"><div class="sup-unidad">m²</div></div></div></div>
+    <div id="sup-dem" style="display:none;" class="sup-bloque"><div class="sup-bloque-label">A demoler</div><div class="sup-grid"><div class="sup-item"><div class="sup-item-label">Cubierta</div><input class="sup-input" type="number" placeholder="0" oninput="calcSup('dem',this)"><div class="sup-unidad">m²</div></div><div class="sup-item"><div class="sup-item-label">Semicubierta</div><input class="sup-input" type="number" placeholder="0" oninput="calcSup('dem',this)"><div class="sup-unidad">m²</div></div><div class="sup-item sup-total"><div class="sup-item-label">Total</div><input class="sup-input" id="tot-dem" readonly placeholder="—"><div class="sup-unidad">m²</div></div></div></div>
+    <div id="sup-baldio"><div class="sup-baldio">Lote baldío — No aplican superficies previas</div></div>
+  </div>
+
+  <!-- TAREA ENCOMENDADA -->
+  <div class="seccion">
+    <div class="sec-label">Tarea encomendada</div>
+    <div class="tareas-selector">
+
+      <!-- ARQUITECTURA -->
+      <div class="tarea-grupo" id="grupo-arq" style="display:none;">
+        <div class="tgh" onclick="toggleGrupo('arq')"><div class="tgc"></div><div class="tgn">Arquitectura</div></div>
+        <div class="tarea-subs" id="subs-arq">
+          <div class="sub-item" data-tarea="Estudios preliminares" data-tipo="simple" onclick="toggleSub(this)"><div class="sc"></div><div class="sn">Estudios preliminares</div></div>
+          <div class="sub-item" data-tarea="Anteproyecto" data-tipo="simple" onclick="toggleSub(this)"><div class="sc"></div><div class="sn">Anteproyecto</div></div>
+          <div class="sub-item" data-tarea="Proyecto" data-tipo="proyecto" onclick="toggleSub(this)"><div class="sc"></div><div class="sn">Proyecto</div></div>
+          <div class="sub-item" data-tarea="Dirección de obra" data-tipo="direccion" onclick="toggleSub(this)"><div class="sc"></div><div class="sn">Dirección de obra</div></div>
+          <div class="sub-item" data-tarea="Dirección por contratos separados" data-tipo="direccion" onclick="toggleSub(this)"><div class="sc"></div><div class="sn">Dirección por contratos separados</div></div>
+          <div class="sub-item" data-tarea="Medición" data-tipo="simple" onclick="toggleSub(this)"><div class="sc"></div><div class="sn">Medición</div></div>
+          <div class="sub-item" data-tarea="Demolición" data-tipo="simple" onclick="toggleSub(this)"><div class="sc"></div><div class="sn">Demolición</div></div>
+          <div class="sub-item" data-tarea="Informe técnico" data-tipo="simple" onclick="toggleSub(this)"><div class="sc"></div><div class="sn">Informe técnico</div></div>
+          <div class="sub-item" data-tarea="Asesoramiento profesional" data-tipo="simple" onclick="toggleSub(this)"><div class="sc"></div><div class="sn">Asesoramiento profesional</div></div>
+          <div class="sub-item" data-tipo="simple" onclick="toggleOtros(this)"><div class="sc"></div><span class="otros-label" style="font-size:10px;color:var(--gris-medio);font-style:italic;">Otros (especificar)</span><input class="otros-input" type="text" placeholder="Describir tarea..." onclick="event.stopPropagation()"></div>
+        </div>
+      </div>
+
+      <!-- GAS -->
+      <div class="tarea-grupo" id="grupo-gas" style="display:none;">
+        <div class="tgh" onclick="toggleGrupo('gas')"><div class="tgc"></div><div class="tgn">Instalaciones de Gas</div></div>
+        <div class="tarea-subs" id="subs-gas">
+          <div class="sub-item" data-tarea="Etapa 1 — Confección de plano y aprobación de cañería" data-tipo="etapa" onclick="toggleSub(this)"><div class="sc"></div><div class="sn">Etapa 1 — Confección de plano y aprobación de cañería</div></div>
+          <div class="sub-item" data-tarea="Etapa 2 — Prueba de hermeticidad y conexión a la red" data-tipo="etapa" onclick="toggleSub(this)"><div class="sc"></div><div class="sn">Etapa 2 — Prueba de hermeticidad y conexión a la red</div></div>
+          <div class="sub-item" data-tarea="Relevamiento y confección de plano (sin plano previo)" data-tipo="simple" onclick="toggleSub(this)"><div class="sc"></div><div class="sn">Relevamiento y confección de plano <em style="font-style:italic;font-size:8.5px;color:var(--gris-medio)">sin plano previo — cotizado aparte</em></div></div>
+        </div>
+      </div>
+
+      <!-- OSM -->
+      <div class="tarea-grupo" id="grupo-osm" style="display:none;">
+        <div class="tgh" onclick="toggleGrupo('osm')"><div class="tgc"></div><div class="tgn">Obras Sanitarias (OSM)</div></div>
+        <div class="tarea-subs" id="subs-osm">
+          <div class="sub-item" data-tarea="Etapa 1 — Gestión documental y presentación" data-tipo="etapa" onclick="toggleSub(this)"><div class="sc"></div><div class="sn">Etapa 1 — Gestión documental y presentación</div></div>
+          <div class="sub-item" data-tarea="Etapa 2 — Inspección y conexión" data-tipo="etapa" onclick="toggleSub(this)"><div class="sc"></div><div class="sn">Etapa 2 — Inspección y conexión</div></div>
+          <div class="sub-item" data-tarea="Conexión a red de agua" data-tipo="simple" onclick="toggleSub(this)"><div class="sc"></div><div class="sn">Conexión a red de agua</div></div>
+          <div class="sub-item" data-tarea="Conexión a red cloacal" data-tipo="simple" onclick="toggleSub(this)"><div class="sc"></div><div class="sn">Conexión a red cloacal</div></div>
+          <div class="sub-item" data-tarea="Relevamiento y confección de plano (sin plano previo)" data-tipo="simple" onclick="toggleSub(this)"><div class="sc"></div><div class="sn">Relevamiento y confección de plano <em style="font-style:italic;font-size:8.5px;color:var(--gris-medio)">sin plano previo — cotizado aparte</em></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DESCRIPCIÓN -->
+  <div class="seccion">
+    <div class="sec-label">Descripción del trabajo</div>
+    <textarea class="desc-area" placeholder="Descripción detallada del trabajo encomendado..."></textarea>
+  </div>
+
+  <!-- DOCUMENTACIÓN -->
+  <div class="seccion">
+    <div class="sec-label">Documentación requerida</div>
+    <div class="doc-master-toggle" onclick="this.classList.toggle('activo');document.getElementById('doc-contenido').style.display=this.classList.contains('activo')?'block':'none'">
+      <div class="dmt-check"></div>
+      <div class="dmt-label">Incluir documentación requerida en este presupuesto</div>
+    </div>
+    <div id="doc-contenido" style="display:none;">
+      <div style="margin-bottom:10px;">
+        <div class="checklist-titulo">A aportar por el comitente</div>
+        <div class="check-header"><div class="ch-left">Documento</div><div class="ch-right"><span>Cliente</span><span>Yo</span></div></div>
+        <div class="check-item"><div>Escritura o boleto de compraventa</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+        <div class="check-item"><div>Plano antecedente</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+        <div class="check-item"><div>Certificación municipal de domicilio</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+        <div class="check-item"><div>DNI titular</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+        <div class="check-item"><div>Libre deuda municipal</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+        <div class="check-item"><div style="font-style:italic;color:var(--gris-medio)">Otro (especificar)</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+      </div>
+      <div class="checklist-titulo">Por organismo — Entrega profesional</div><div id="doc-arq"><div id="doc-gas" style="display:none;"><div id="doc-osm" style="display:none;">
+      <div class="checklist-org">
+        <button class="org-btn" onclick="this.classList.toggle('abierto');this.nextElementSibling.classList.toggle('visible')">Municipio de Junín <span class="org-flecha">▼</span></button>
+        <div class="org-contenido">
+          <div class="subtipo-label">Factibilidad</div>
+          <div class="check-header"><div class="ch-left">Ítem</div><div class="ch-right"><span>Cliente</span><span>Yo</span></div></div>
+          <div class="check-item"><div>Solicitud de FACTIBILIDAD dirigida a Dirección de Obras Particulares</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Fotocopia DNI solicitante</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>2 planos generales en escala 1:100 incluyendo planta de techos</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-nota">* Para créditos hipotecarios que necesiten Aprobación Provisoria, visada por Colegio profesional respectivo.</div>
+          <div class="subtipo-label">Previsado · Construcción / Ampliación / Refacción</div>
+          <div class="check-header"><div class="ch-left">Ítem</div><div class="ch-right"><span>Cliente</span><span>Yo</span></div></div>
+          <div class="check-item"><div>Planilla de presentación</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>1 copia plano antecedente <em>solo en el caso de ampliación</em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>5 planos generales en escala 1:100 incluyendo planta de techos</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>2 planos de estructura con planillas de cálculo y detalle de armado de escaleras</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>2 planos Instalación eléctrica incluyendo diagrama unifilar</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>4 planos Instalación sanitaria incluyendo 1 corte mínimo</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div style="font-weight:700">LA REFACCIÓN SE LIQUIDARÁ POR M² (ESPECIFICAR M² REFACCIONADOS)</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="subtipo-label">Expediente de construcción</div>
+          <div class="check-header"><div class="ch-left">Ítem</div><div class="ch-right"><span>Cliente</span><span>Yo</span></div></div>
+          <div class="check-item"><div>Planilla de presentación</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Formulario 103 - 104 o 105 por duplicado</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Fotocopia de escritura ó constancia de escribanía c/boleto</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Planilla de estadísticas de la edificación por duplicado</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Autorización condómino/s con certificación de escribanía <em>solo en PH</em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Informe de Obras Sanitarias <em>Solicitarlo a <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b3daddd5dcc1ded6c09ddcc0def3d4ded2dadf9dd0dcde">[email&#160;protected]</a></em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Acta de estado de linderos firmada por propietarios <em>solo cuando apoye/arrime en construcciones linderas</em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>1 copia plano antecedente</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>5 planos generales en escala 1:100 incluyendo planta de techos</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>2 planos de estructura en escala 1:100 con planillas de cálculo</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>2 planos Instalación eléctrica incluyendo diagrama unifilar</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>4 planos Instalación sanitaria incluyendo 1 corte mínimo</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>1 Informe antisiniestral <em>solo en PB, 3 o más pisos</em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Cercos y carteles de obra reglamentarios</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="subtipo-label">Relevamiento</div>
+          <div class="check-header"><div class="ch-left">Ítem</div><div class="ch-right"><span>Cliente</span><span>Yo</span></div></div>
+          <div class="check-item"><div>Planilla de presentación</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Solicitud de Final de Obra dirigida a Intendente Municipal, visada por Colegio</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Informe Técnico por duplicado</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Formulario 103 - 104 o 105 por duplicado</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Fotocopia de escritura ó constancia de escribanía c/boleto si hay cambio de titular</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Planilla de estadísticas de la edificación por duplicado</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Informe de Obras Sanitarias <em>Solicitarlo a <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="a8c1c6cec7dac5cddb86c7dbc5e8cfc5c9c1c486cbc7c5">[email&#160;protected]</a></em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Planillas de Revalúo (Registración en Arba)</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Estado de Obra <em>si se trata de Relevamiento con Faltante de Obra</em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>1 copia plano antecedente</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>3 fotos de frente 4x6 cm</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>5 planos generales en escala 1:100 incluyendo planta de techos</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>4 planos Esquema sanitario</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>2 planos de cada plano complementario <em>en caso de Relevam. c/FO con tareas aún no ejecutadas</em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="subtipo-label">Final de obra</div>
+          <div class="check-header"><div class="ch-left">Ítem</div><div class="ch-right"><span>Cliente</span><span>Yo</span></div></div>
+          <div class="check-item"><div>Planilla de presentación</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Solicitud de Final de Obra dirigida a Intendente Municipal</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Formulario 103 - 104 o 105 por duplicado</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Fotocopia escritura ó constancia escribanía c/boleto si hay cambio de titular</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Planilla de estadísticas de la edificación por duplicado</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Informe de Obras Sanitarias <em>Solicitarlo a <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="4b22252d2439262e38652438260b2c262a222765282426">[email&#160;protected]</a></em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Planillas de Revalúo ACTUALIZADAS</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>3 fotos de frente 4x6 cm</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>5 planos generales en escala 1:100 incluyendo planta de techos</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>4 planos Instalación sanitaria conforme a obra</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>1 Informe antisiniestral <em>solo en PB, 3 o más pisos</em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>1 copia inscripción conservador Ascensor/montacargas <em>cuando exista elevador</em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="subtipo-label">Permiso de demolición</div>
+          <div class="check-header"><div class="ch-left">Ítem</div><div class="ch-right"><span>Cliente</span><span>Yo</span></div></div>
+          <div class="check-item"><div>Solicitud de demolición dirigida a Dirección de Obras Particulares, visada por Colegio</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>2 planos generales en escala 1:100 visado por Colegio profesional</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Corte y anulación del servicio de gas, otorgado por Servicio Gas Junín</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Acta de compromiso y verificación de muros linderos firmado por ambos linderos</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-nota">* En caso de construcción podrá declararse la demolición en el Expte. de Obra.</div>
+        </div>
+      </div>
+      <div class="checklist-org">
+        <button class="org-btn" onclick="this.classList.toggle('abierto');this.nextElementSibling.classList.toggle('visible')">OSM — Obras Sanitarias <span class="org-flecha">▼</span></button>
+        <div class="org-contenido">
+          <div class="subtipo-label">Trámite Conexión a Red de Agua</div>
+          <div class="check-header"><div class="ch-left">Ítem</div><div class="ch-right"><span>Cliente</span><span>Yo</span></div></div>
+          <div class="check-item"><div>Fotocopia escritura o boleto legalizado</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Fotocopia plano general</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Copia plano Instalación Sanitaria <em>Construcción nueva</em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Copia plano/Esquema Instal. Sanit. Existente <em>Construcción existente</em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Esquema Instalación existente <em>Construcciones precarias</em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Recibo de pago al consorcio</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Planilla <strong>completa</strong> firmada por matriculado y propietario <em>Formulario físico — retirar en OSM</em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Fotocopia D.N.I. del Propietario</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Pedir interferencias en Grupo Junín</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="subtipo-label">Trámite Conexión a Red Cloacal</div>
+          <div class="check-header"><div class="ch-left">Ítem</div><div class="ch-right"><span>Cliente</span><span>Yo</span></div></div>
+          <div class="check-item"><div>Fotocopia escritura o boleto legalizado</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Fotocopia plano general</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Copia plano Instalación Sanitaria <em>Construcción nueva</em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Copia plano/Esquema Instal. Sanit. Existente <em>Construcción existente</em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Esquema Instalación existente <em>Construcciones precarias</em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Recibo de pago al consorcio</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>50 kg de cal viva p/cegado de pozo a los 30 días</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Planilla <strong>completa</strong> firmada por matriculado y propietario <em>Formulario físico — retirar en OSM</em></div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Incluyendo distancia conexión a centro de Boca de Registro</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Fotocopia D.N.I. del Propietario</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Pedir interferencias en Grupo Junín</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-nota">Se deberá solicitar inspección de cañerías pluviales y cloacales previo al tapado. Luego de la verificación se otorgará un certificado para adjuntar a la solicitud de conexión. Requisito indispensable para el volcamiento a la red. Para obras existentes se verificarán los desagües pluviales a cordón de vereda. Reglamento OSN, Ordenanzas 1924/82, 6663/14 y 6815/15.</div>
+        </div>
+      </div>
+      <div class="checklist-org">
+        <button class="org-btn" onclick="this.classList.toggle('abierto');this.nextElementSibling.classList.toggle('visible')">Gas — Documentación <span class="org-flecha">▼</span></button>
+        <div class="org-contenido">
+          <div class="subtipo-label">Del solicitante</div>
+          <div class="check-header"><div class="ch-left">Ítem</div><div class="ch-right"><span>Cliente</span><span>Yo</span></div></div>
+          <div class="check-item"><div>Fotocopia escritura</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Certificación de domicilio</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Fotocopia DNI del titular</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Libre deuda del consorcio</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Alta municipal</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="subtipo-label">Del profesional</div>
+          <div class="check-header"><div class="ch-left">Ítem</div><div class="ch-right"><span>Cliente</span><span>Yo</span></div></div>
+          <div class="check-item"><div>Planilla 3.4</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Habilitación in situ</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Plano visado por Colegio</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Plano antecedente</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Rentas</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Pedido de inspección</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-item"><div>Pedido de conexión</div><div class="check-cols"><div class="cb" onclick="this.classList.toggle('marcado')"></div><div class="cb" onclick="this.classList.toggle('marcado')"></div></div></div>
+          <div class="check-nota">* El trámite de solicitud de conexión al servicio debe ser realizado personalmente por el propietario ante las oficinas de Gas Junín.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HONORARIOS -->
+  <div class="seccion">
+    <div class="sec-label">Honorarios</div>
+    <div class="hon-tabs">
+      <button class="hon-tab activa" onclick="cambiarHon('publico',this)">Honorarios</button>
+      <button class="hon-tab" onclick="cambiarHon('capba',this)">🔒 Referencia CAPBA</button>
+    </div>
+
+    <!-- PANEL PÚBLICO — bloques dinámicos por tarea -->
+    <div class="hon-panel visible" id="hon-publico">
+      <div id="hon-bloques-container">
+        <div style="padding:16px;font-size:9.5px;color:var(--gris-medio);font-style:italic;">Seleccioná las tareas encomendadas para completar los honorarios.</div>
+      </div>
+      <div class="hon-total-barra">
+        <span class="hon-total-label">Total honorarios</span>
+        <span class="hon-total-valor" id="hon-total">$ —</span>
+      </div>
+    </div>
+
+    <!-- PANEL CAPBA — solo profesional -->
+    <div class="hon-panel" id="hon-capba">
+      <div style="padding:16px;">
+        <div style="font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--beige);margin-bottom:12px;">🔒 Referencia CAPBA — No se imprime</div>
+        <div class="capba-grid">
+          <div class="capba-fila"><span class="capba-label">Honorario CAPBA (del sistema online)</span><div style="display:flex;align-items:center;gap:3px;"><span style="font-size:11px;color:var(--gris-medio);">$</span><input class="capba-input" type="number" placeholder="0" id="capba-hon" oninput="calcCapba()"></div></div>
+          <div class="capba-fila"><span class="capba-label">% Aporte CAPBA</span><div style="display:flex;align-items:center;gap:3px;"><input class="capba-input" type="number" placeholder="0" id="capba-porc-c" oninput="calcCapba()"><span class="capba-sfx">%</span></div></div>
+          <div class="capba-fila"><span class="capba-label">% Aporte CEP</span><div style="display:flex;align-items:center;gap:3px;"><input class="capba-input" type="number" placeholder="0" id="capba-porc-e" oninput="calcCapba()"><span class="capba-sfx">%</span></div></div>
+        </div>
+        <div class="capba-resultado">
+          <div><div class="rb-label">Aporte CAPBA</div><div class="rb-valor" id="capba-res-c">$ —</div></div>
+          <div><div class="rb-label">Aporte CEP</div><div class="rb-valor" id="capba-res-e">$ —</div></div>
+          <div><div class="rb-label">Total cargas</div><div class="rb-valor" id="capba-res-total">$ —</div></div>
+        </div>
+        <div class="capba-nota">El honorario CAPBA es el valor de referencia obtenido del sistema online del Colegio. Se utiliza exclusivamente para calcular los aportes al Colegio y a la CEP. El honorario efectivamente cobrado es resultado del acuerdo entre las partes.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLÁUSULA GAS/OSM — aparece cuando corresponde -->
+  <div id="clausula-deslinde" style="display:none;" class="seccion">
+    <div class="clausula-deslinde" id="texto-clausula"></div>
+  </div>
+
+  <!-- GASTOS -->
+  <div class="seccion">
+    <div class="sec-label">Gastos a cargo del comitente</div>
+    <div class="gastos-toggle" onclick="this.classList.toggle('activo')">
+      <div class="gt-check"></div>
+      <div class="gt-label">Incluir gastos a cargo del comitente en este presupuesto</div>
+    </div>
+    <div class="gastos-contenido">
+      <div class="gastos-placeholder">— Lista de gastos a cargar según tarea y organismo —</div>
+    </div>
+  </div>
+
+  <!-- MEDIOS DE COBRO -->
+  <div class="seccion">
+    <div class="sec-label">Medios de cobro aceptados</div>
+    <div class="medios-grid">
+      <div class="medio-item" onclick="this.classList.toggle('activo')"><div class="mch"></div><div class="medio-nombre">Transferencia bancaria</div></div>
+      <div class="medio-item" onclick="this.classList.toggle('activo')"><div class="mch"></div><div class="medio-nombre">Efectivo</div></div>
+      <div class="medio-item" onclick="this.classList.toggle('activo')"><div class="mch"></div><div class="medio-nombre">Cheque</div></div>
+      <div class="medio-item" onclick="this.classList.toggle('activo')"><div class="mch"></div><div class="medio-nombre">Billetera virtual</div></div>
+    </div>
+    <div class="pago-datos">CBU: <strong>— a cargar —</strong> · Alias: <strong>— a cargar —</strong> · Banco: <strong>— a cargar —</strong></div>
+  </div>
+
+  <!-- CONDICIONES GENERALES -->
+  <div class="seccion">
+    <div class="sec-label">Condiciones generales</div>
+    <textarea class="cond-textarea" placeholder="Condiciones generales del encargo profesional...">El presente presupuesto tiene validez hasta la fecha indicada. Cualquier modificación al alcance original deberá acordarse por escrito entre las partes.</textarea>
+    <div class="cond-opciones">
+      <div class="cond-toggle" onclick="this.classList.toggle('activo')">
+        <div class="ctc"></div>
+        <div class="ct-label">Incluir cláusula de ajuste por variación de costos</div>
+      </div>
+      <div class="cond-detalle">
+        <div class="cdf"><span class="cdl">Índice de referencia</span><input type="text" id="cond-indice" placeholder="Ej: CAC" oninput="actualizarCondResultado()"></div>
+        <div class="cdf"><span class="cdl">Periodicidad</span><input type="text" id="cond-period" placeholder="Ej: cada 6 meses" oninput="actualizarCondResultado()"></div>
+        <div class="cond-resultado" id="cond-ajuste-resultado">Los honorarios serán actualizados según el Índice de Costo de la Construcción (CAC) publicado por la Cámara Argentina de la Construcción, con la periodicidad acordada.</div>
+      </div>
+      <div class="cond-toggle" onclick="this.classList.toggle('activo')">
+        <div class="ctc"></div>
+        <div class="ct-label">Incluir cláusula sobre modificaciones al alcance original</div>
+      </div>
+      <div class="cond-detalle">
+        <div class="cond-resultado">Cualquier modificación al proyecto original que implique cambios en superficies, programa o etapas será presupuestada por separado y requerirá acuerdo escrito entre las partes.</div>
+      </div>
+      <div class="cond-toggle" onclick="this.classList.toggle('activo')">
+        <div class="ctc"></div>
+        <div class="ct-label">Especificar plazo estimado de ejecución</div>
+      </div>
+      <div class="cond-detalle">
+        <div class="cdf"><span class="cdl">Plazo estimado</span><input type="text" id="cond-plazo" placeholder="Ej: 60 días hábiles" oninput="actualizarCondResultado()"></div>
+        <div class="cond-resultado" id="cond-plazo-resultado">El plazo indicado es estimativo y sujeto a los tiempos de gestión de organismos intervinientes.</div>
+      </div>
+    </div>
+    <div class="cond-validez">
+      <span class="cv-label">Validez del presupuesto hasta</span>
+      <input class="cv-input fi" type="text" placeholder="DD/MM/AAAA" maxlength="10" oninput="autoFecha(this)">
+    </div>
+    <div class="cond-fiscal">Monotributista · Se emite comprobante fiscal tipo C · CUIT 21-21500579-3</div>
+  </div>
+
+  <!-- OBSERVACIONES -->
+  <div class="seccion">
+    <div class="sec-label">Observaciones</div>
+    <textarea class="obs-area" placeholder="Observaciones o aclaraciones adicionales..."></textarea>
+  </div>
+
+  <!-- FIRMA -->
+  <div class="firma-grid">
+    <div class="firma-item">
+      <div class="firma-linea"></div>
+      <div class="firma-nombre">Firma del comitente</div>
+      <div class="firma-lf"><span class="fl-label">Lugar y fecha:</span><input type="text" placeholder="Junín, DD/MM/AAAA"></div>
+    </div>
+    <div class="firma-item">
+      <div class="firma-linea"></div>
+      <div class="firma-nombre">Arq. Carina Dall'Occhio · Mat. 21008</div>
+      <div class="firma-lf"><span class="fl-label">Lugar y fecha:</span><input type="text" placeholder="Junín, DD/MM/AAAA"></div>
+    </div>
+  </div>
+
+  <hr class="sep" style="margin-top:32px;">
+
+  <!-- BLOQUE SOLO PROFESIONAL -->
+  <div class="solo-pro">
+    <div class="sp-header">
+      <div class="sp-badge">🔒 Solo profesional — No se imprime</div>
+      <div class="sp-version-row">
+        <span>Versión:</span>
+        <input type="text" value="Rev. 1">
+        <span style="margin-left:6px;">Aceptado el:</span>
+        <input class="fi" type="text" placeholder="DD/MM/AAAA" maxlength="10" oninput="autoFecha(this)">
+      </div>
+    </div>
+
+    <!-- CALCULADORA CAC -->
+    <div class="sp-sublabel">Calculadora de ajuste por índice CAC</div>
+    <div style="margin-bottom:6px;">
+      <div style="font-size:8px;color:var(--gris-medio);margin-bottom:6px;">Tipo de índice a aplicar:</div>
+      <div class="cac-tipo-row">
+        <div class="cac-tipo-chip activo" onclick="setCacTipo(this)">Costo de Construcción (general)</div>
+        <div class="cac-tipo-chip" onclick="setCacTipo(this)">Mano de Obra</div>
+        <div class="cac-tipo-chip" onclick="setCacTipo(this)">Materiales</div>
+      </div>
+    </div>
+    <div class="cac-provisorio" onclick="this.classList.toggle('activo')">
+      <div class="cac-prov-check"></div>
+      <div class="cac-prov-label">El índice actual es provisorio (definitivo se publica a mediados del mes siguiente)</div>
+    </div>
+    <div class="cac-prov-aviso">⚠ Índice provisorio — recordá ajustar cuando se publique el definitivo.</div>
+    <div class="cac-grid">
+      <div class="cac-celda"><div class="cac-clabel">Índice base (mes de firma)</div><input class="cac-input" type="number" placeholder="0" id="cac-base" oninput="calcCAC()"></div>
+      <div class="cac-celda"><div class="cac-clabel">Índice actual</div><input class="cac-input" type="number" placeholder="0" id="cac-actual" oninput="calcCAC()"></div>
+      <div class="cac-celda"><div class="cac-clabel">Coeficiente</div><input class="cac-input cac-coef-val" type="text" id="cac-coef" placeholder="—" readonly></div>
+    </div>
+    <div class="cac-saldo-row">
+      <span class="cac-saldo-label">Saldo pendiente a ajustar</span>
+      <span style="font-size:13px;color:var(--gris-medio);">$</span>
+      <input class="cac-saldo-input" type="number" placeholder="0" id="cac-saldo" oninput="calcCAC()">
+    </div>
+    <div class="cac-resultado">
+      <div><div class="rb-label">Monto actualizado por CAC</div><div class="rb-valor" id="cac-resultado-val">$ —</div></div>
+      <div style="text-align:right"><div class="rb-label">Diferencia respecto al original</div><div class="rb-valor" id="cac-diferencia">$ —</div></div>
+    </div>
+    <div style="margin-top:8px;font-size:8px;color:var(--gris-medio);font-style:italic;line-height:1.5;">Consultar valores en <strong>camarco.org.ar</strong> · El índice CAC es un indicador estadístico del sector construcción. Su aplicación a honorarios profesionales es de uso habitual y responsabilidad del profesional interviniente.</div>
+
+    <!-- HISTORIAL CAC -->
+    <div class="cac-historial">
+      <div class="cac-hist-label">Historial de ajustes</div>
+      <table class="cac-hist-tabla">
+        <thead><tr><th>Fecha</th><th>Índice base</th><th>Índice aplicado</th><th>Coeficiente</th><th>Monto ajustado</th></tr></thead>
+        <tbody id="cac-hist-body"><tr><td colspan="5" style="text-align:center;font-style:italic;color:var(--gris-medio);">Sin ajustes registrados</td></tr></tbody>
+      </table>
+      <button onclick="registrarAjusteCAC()" style="margin-top:6px;padding:4px 12px;background:var(--beige);color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;">+ Registrar ajuste</button>
+    </div>
+
+    <!-- OBSERVACIONES INTERNAS -->
+    <div class="sp-sublabel" style="margin-top:14px;">Observaciones internas por tarea</div>
+    <div class="obs-internas" id="obs-internas">
+      <div style="font-size:9px;color:var(--gris-medio);font-style:italic;">Seleccioná tareas para agregar observaciones internas.</div>
+    </div>
+
+  </div>
+
+</div><!-- fin hoja -->
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast-msg');
+  t.textContent=msg;t.classList.add('visible');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('visible'),2500);
+}
+
+// ── NUEVO PRESUPUESTO ──
+let correlativo=1;
+let presupuestoGenerado=false;
+
+function nuevoPresupuesto(){
+  if(!confirm('¿Crear un nuevo presupuesto? Los datos actuales no se guardarán.'))return;
+  document.querySelectorAll('.hoja input:not([readonly]),.hoja textarea').forEach(el=>el.value='');
+  document.querySelectorAll('.tipo-chip.activo,.sub-item.activa,.tarea-grupo.activo,.medio-item.activo,.cb.marcado').forEach(el=>el.classList.remove('activo','activa','marcado'));
+  document.getElementById('hon-bloques-container').innerHTML='<div style="padding:16px;font-size:9.5px;color:var(--gris-medio);font-style:italic;">Seleccioná las tareas encomendadas para completar los honorarios.</div>';
+  document.getElementById('hon-total').textContent='$ —';
+  document.getElementById('obs-internas').innerHTML='<div style="font-size:9px;color:var(--gris-medio);font-style:italic;">Seleccioná tareas para agregar observaciones internas.</div>';
+  document.getElementById('nro-pendiente').style.display='inline';
+  document.getElementById('nro-campos').style.display='none';
+  document.getElementById('btn-generar').style.display='block';
+  document.getElementById('btn-imprimir-real').style.display='none';
+  document.querySelectorAll('.eb').forEach(b=>b.classList.remove('activo'));
+  document.getElementById('sello').classList.remove('visible');
+  presupuestoGenerado=false;
+  // Fecha hoy
+  const h=new Date(),d=String(h.getDate()).padStart(2,'0'),m=String(h.getMonth()+1).padStart(2,'0');
+  document.getElementById('fecha-doc').value=`${d}/${m}/${h.getFullYear()}`;
+  // Ocultar grupos tareas
+  ['arq','gas','osm'].forEach(id=>{
+    const g=document.getElementById('grupo-'+id);
+    if(g)g.style.display='none';
+  });
+  document.getElementById('bloque-indicadores').style.display='none';
+  document.getElementById('bloque-superficies').style.display='none';
+  document.getElementById('clausula-deslinde').style.display='none';
+  document.getElementById('sp-arq-solo').style.display='none';
+  document.getElementById('titulo-sub').textContent='—';
+  document.getElementById('enc-esp').textContent='Arquitectura · Instalaciones de Gas · Obras Sanitarias';
+  showToast('Nuevo presupuesto iniciado');
+}
+
+function generarPresupuesto(){
+  const activos=[...document.querySelectorAll('.tipo-chip.activo')].map(c=>c.textContent.replace('✓','').trim());
+  if(activos.length===0){showToast('Seleccioná al menos un tipo de servicio');return;}
+  const pre=activos.length===1?(activos[0].includes('Gas')?'GAS':activos[0].includes('Sanit')?'OSM':'ARQ'):'PRO';
+  const anio=new Date().getFullYear();
+  const num=String(correlativo).padStart(3,'0');
+  document.getElementById('ni-pre').value=pre;
+  document.getElementById('ni-yr').value=anio;
+  document.getElementById('ni-num').value=num;
+  correlativo++;
+  document.getElementById('nro-pendiente').style.display='none';
+  const nc=document.getElementById('nro-campos');
+  nc.style.display='flex';
+  nc.style.gap='5px';
+  nc.style.alignItems='center';
+  document.getElementById('btn-generar').style.display='none';
+  document.getElementById('btn-imprimir-real').style.display='block';
+  presupuestoGenerado=true;
+  showToast(`Presupuesto ${pre}-${anio}-${num} generado`);
+}
+
+// ── DISCIPLINAS — filtrar tareas y docs ──
+function actualizarDisciplinas(){
+  const activos=[...document.querySelectorAll('.tipo-chip.activo')].map(c=>c.textContent.replace('✓','').trim());
+  const arq=activos.some(a=>a.includes('Arquitectura'));
+  const gas=activos.some(a=>a.includes('Gas'));
+  const osm=activos.some(a=>a.includes('Sanitarias'));
+  
+  // Grupos tareas
+  const ga=document.getElementById('grupo-arq');if(ga)ga.style.display=arq?'':'none';
+  const gg=document.getElementById('grupo-gas');if(gg)gg.style.display=gas?'':'none';
+  const go=document.getElementById('grupo-osm');if(go)go.style.display=osm?'':'none';
+  
+  // Bloques arquitectura
+  document.getElementById('bloque-indicadores').style.display=arq?'block':'none';
+  document.getElementById('bloque-superficies').style.display=arq?'block':'none';
+  document.getElementById('sp-arq-solo').style.display=arq?'block':'none';
+  
+  // Cláusula deslinde
+  document.getElementById('clausula-deslinde').style.display=(gas||osm)?'block':'none';
+  
+  // Documentación filtrada
+  const da=document.getElementById('doc-arq');if(da)da.style.display=arq?'':'none';
+  const dg=document.getElementById('doc-gas');if(dg)dg.style.display=gas?'':'none';
+  const do2=document.getElementById('doc-osm');if(do2)do2.style.display=osm?'':'none';
+  
+  // Prefijo
+  const pre=document.getElementById('ni-pre');
+  if(pre&&activos.length===1){
+    if(activos[0].includes('Gas'))pre.value='GAS';
+    else if(activos[0].includes('Sanit'))pre.value='OSM';
+    else pre.value='ARQ';
+  }else if(pre&&activos.length>1)pre.value='PRO';
+  
+  // Título
+  document.getElementById('titulo-sub').textContent=activos.length?activos.join(' · '):'—';
+  document.getElementById('enc-esp').textContent=activos.length?activos.join(' · '):'Arquitectura · Instalaciones de Gas · Obras Sanitarias';
+}
+
+// ── INIT ──
+window.addEventListener('load',()=>{
+  const h=new Date(),d=String(h.getDate()).padStart(2,'0'),m=String(h.getMonth()+1).padStart(2,'0');
+  const fi=document.getElementById('fecha-doc');
+  if(fi)fi.value=`${d}/${m}/${h.getFullYear()}`;
+});
+
+// ── FECHA AUTO ──
+function autoFecha(i){let v=i.value.replace(/\D/g,'');if(v.length>=2)v=v.slice(0,2)+'/'+v.slice(2);if(v.length>=5)v=v.slice(0,5)+'/'+v.slice(5,9);i.value=v;}
+
+// ── INSTAGRAM ──
+function toggleIG(){
+  const ig=document.getElementById('enc-ig');
+  const btn=document.getElementById('btn-ig');
+  const v=ig.classList.toggle('visible');
+  btn.textContent=v?'− Ocultar Instagram':'+ Activar Instagram';
+}
+
+// ── OJO PDF ──
+function toggleOjo(id){
+  const btn=document.getElementById('ojo-'+id);
+  const bloque=id==='indicadores'?document.getElementById('contenido-indicadores'):document.getElementById('bloque-'+id);
+  const oculto=bloque.classList.toggle('oculto-pdf');
+  btn.textContent=oculto?'🙈':'👁';
+}
+
+// ── TIPO SERVICIO ──
+function toggleTipo(el,nombre){
+  el.classList.toggle('activo');
+  const activos=[...document.querySelectorAll('.tipo-chip.activo')].map(c=>c.textContent.replace('✓','').trim());
+  const arq=activos.some(a=>a.includes('Arquitectura'));
+  const gas=activos.some(a=>a.includes('Gas'));
+  const osm=activos.some(a=>a.includes('Sanitarias'));
+  document.getElementById('titulo-sub').textContent=activos.length?activos.join(' · '):'—';
+  document.getElementById('enc-esp').textContent=activos.length?activos.join(' · '):'Arquitectura · Instalaciones de Gas · Obras Sanitarias';
+  const arq=activos.some(a=>a.includes('Arquitectura'));
+  document.getElementById('bloque-indicadores').style.display=arq?'block':'none';
+  document.getElementById('bloque-superficies').style.display=arq?'block':'none';
+  // Prefijo automático
+  const pre=document.querySelector('.ni-pre');
+  if(activos.length===1){
+    if(activos[0].includes('Gas'))pre.value='GAS';
+    else if(activos[0].includes('Sanitarias'))pre.value='OSM';
+    else pre.value='ARQ';
+  }else if(activos.length>1)pre.value='PRO';
+  // Cláusula deslinde
+  actualizarClausula(activos);
+}
+
+function actualizarClausula(activos){
+  const tieneGas=activos.some(a=>a.includes('Gas'));
+  const tieneOSM=activos.some(a=>a.includes('Sanitarias'));
+  const clausula=document.getElementById('clausula-deslinde');
+  const texto=document.getElementById('texto-clausula');
+  if(tieneGas||tieneOSM){
+    clausula.style.display='block';
+    texto.textContent='El/la profesional matriculado/a limita su actuación a la confección del proyecto, gestión y aprobación de la instalación, no teniendo intervención ni responsabilidad sobre las restantes tareas de obra. En consecuencia, no asume responsabilidad sobre el estado de la instalación en el período comprendido entre la aprobación (Etapa 1) y la verificación final (Etapa 2), siendo responsabilidad exclusiva del propietario y de la empresa contratista a cargo de la obra el correcto mantenimiento y resguardo de la misma durante dicho período.';
+  }else{clausula.style.display='none';}
+}
+
+// ── SUPERFICIES ──
+function toggleSup(el,tipo){
+  document.getElementById('t-baldio').classList.remove('activo');
+  document.getElementById('sup-baldio').style.display='none';
+  el.classList.toggle('activo');
+  document.getElementById('sup-'+tipo).style.display=el.classList.contains('activo')?'block':'none';
+}
+function toggleBaldio(el){
+  ['proy','exist','dem'].forEach(t=>{
+    document.querySelectorAll('.sup-toggle').forEach(s=>{if(s.id!=='t-baldio')s.classList.remove('activo');});
+    document.getElementById('sup-'+t).style.display='none';
+  });
+  el.classList.add('activo');
+  document.getElementById('sup-baldio').style.display='block';
+}
+function calcSup(tipo,input){
+  const bloque=input.closest('.sup-bloque');
+  const nums=bloque.querySelectorAll('input[type=number]');
+  const c=parseFloat(nums[0].value)||0,s=parseFloat(nums[1].value)||0;
+  document.getElementById('tot-'+tipo).value=(c+s)>0?fmt(c+s):'';
+}
+
+// ── TAREAS Y HONORARIOS DINÁMICOS ──
+function toggleGrupo(id){
+  document.getElementById('grupo-'+id).classList.toggle('activo');
+  actualizarHonorarios();
+  actualizarObsInternas();
+}
+function toggleSub(el){
+  el.classList.toggle('activa');
+  actualizarHonorarios();
+  actualizarObsInternas();
+}
+function toggleOtros(el){
+  el.classList.toggle('activa');
+  if(el.classList.contains('activa'))el.querySelector('.otros-input').focus();
+  actualizarHonorarios();
+  actualizarObsInternas();
+}
+
+function actualizarHonorarios(){
+  const container=document.getElementById('hon-bloques-container');
+  const activas=[...document.querySelectorAll('.sub-item.activa')];
+  if(activas.length===0){
+    container.innerHTML='<div style="padding:16px;font-size:9.5px;color:var(--gris-medio);font-style:italic;">Seleccioná las tareas encomendadas para completar los honorarios.</div>';
+    calcTotalHonorarios();
+    return;
+  }
+  container.innerHTML='';
+  activas.forEach((item,idx)=>{
+    const tipo=item.dataset.tipo||'simple';
+    const nombreEl=item.querySelector('.sn')||item.querySelector('.otros-input');
+    const nombre=nombreEl?((nombreEl.tagName==='INPUT'&&nombreEl.value)?nombreEl.value:nombreEl.textContent.trim()):'Tarea';
+    const id='hon-'+idx;
+    let html='';
+    if(tipo==='direccion'){
+      html=generarBloquesDireccion(nombre,id);
+    }else if(tipo==='proyecto'){
+      html=generarBloqueProyecto(nombre,id);
+    }else{
+      html=generarBloqueSimple(nombre,id);
+    }
+    container.insertAdjacentHTML('beforeend',html);
+  });
+  calcTotalHonorarios();
+}
+
+function generarBloqueSimple(nombre,id){
+  return `<div class="hon-bloque">
+    <div class="hon-bloque-titulo">${nombre}</div>
+    <div class="hon-monto-row">
+      <span class="hon-signo">$</span>
+      <input class="hon-monto-input" type="number" placeholder="0" id="monto-${id}" oninput="updateLetras('${id}');calcTotalHonorarios()">
+    </div>
+    <div class="hon-letras" id="letras-${id}">—</div>
+    <div class="hon-unidad-row">
+      <div class="uc activo" onclick="setUC(this,'${id}')">Pesos</div>
+      <div class="uc" onclick="setUC(this,'${id}')">Dólares</div>
+    </div>
+    <div class="hon-dolar-ref" id="dref-${id}">
+      <span>Tipo de cambio de referencia:</span>
+      <input type="text" placeholder="Ej: BNA vendedor del día de pago">
+    </div>
+    <div class="hon-pago-label">Forma de pago</div>
+    <div class="hon-pago-opts" id="opts-${id}">
+      <div class="hpc" onclick="elegirPago(this,'${id}')">Pago único</div>
+      <div class="hpc" onclick="elegirPago(this,'${id}')">Anticipo + saldo</div>
+      <div class="hpc" onclick="elegirPago(this,'${id}')">Cuotas</div>
+    </div>
+    <div class="hon-pago-elegido" id="pago-el-${id}">
+      <span id="pago-el-txt-${id}"></span>
+      <button class="hon-cambiar" onclick="cambiarPago('${id}')">Cambiar</button>
+    </div>
+    <div class="ajuste-toggle" onclick="this.classList.toggle('activo')">
+      <div class="atc"></div><div class="at-label">Incluir ajuste por CAC</div>
+    </div>
+    <div class="ajuste-detalle">
+      <div class="ad-fila"><span class="ad-label">Periodicidad</span><input type="text" placeholder="Ej: cada 6 meses"></div>
+      <div class="ad-fila"><span class="ad-label">Índice base</span><input type="text" placeholder="Ej: CAC Enero 2026"></div>
+    </div>
+  </div>`;
+}
+
+function generarBloqueProyecto(nombre,id){
+  return `<div class="hon-bloque">
+    <div class="hon-bloque-titulo">${nombre}</div>
+    <div class="hon-monto-row">
+      <span class="hon-signo">$</span>
+      <input class="hon-monto-input" type="number" placeholder="0" id="monto-${id}" oninput="updateLetras('${id}');calcTotalHonorarios()">
+    </div>
+    <div class="hon-letras" id="letras-${id}">—</div>
+    <div class="hon-unidad-row">
+      <div class="uc activo" onclick="setUC(this,'${id}')">Pesos</div>
+      <div class="uc" onclick="setUC(this,'${id}')">Dólares</div>
+    </div>
+    <div class="hon-dolar-ref" id="dref-${id}">
+      <span>Tipo de cambio de referencia:</span>
+      <input type="text" placeholder="Ej: BNA vendedor del día de pago">
+    </div>
+    <div class="hon-pago-label">Forma de pago</div>
+    <div class="hon-pago-opts" id="opts-${id}">
+      <div class="hpc" onclick="elegirPago(this,'${id}')">Pago único</div>
+      <div class="hpc" onclick="elegirPago(this,'${id}')">Anticipo + saldo</div>
+      <div class="hpc" onclick="elegirPago(this,'${id}')">Anticipo + cuotas</div>
+    </div>
+    <div class="hon-pago-elegido" id="pago-el-${id}">
+      <span id="pago-el-txt-${id}"></span>
+      <button class="hon-cambiar" onclick="cambiarPago('${id}')">Cambiar</button>
+    </div>
+    <div class="ajuste-toggle" onclick="this.classList.toggle('activo')">
+      <div class="atc"></div><div class="at-label">Incluir ajuste por CAC</div>
+    </div>
+    <div class="ajuste-detalle">
+      <div class="ad-fila"><span class="ad-label">Periodicidad</span><input type="text" placeholder="Ej: cada 6 meses"></div>
+      <div class="ad-fila"><span class="ad-label">Índice base</span><input type="text" placeholder="Ej: CAC Enero 2026"></div>
+    </div>
+  </div>`;
+}
+
+function generarBloquesDireccion(nombre,id){
+  return `<div class="hon-bloque">
+    <div class="hon-bloque-titulo">${nombre}</div>
+    <div class="hon-monto-row">
+      <span class="hon-signo">$</span>
+      <input class="hon-monto-input" type="number" placeholder="0" id="monto-${id}" oninput="updateLetras('${id}');calcCuota('${id}');calcTotalHonorarios()">
+      <span class="hon-por-mes" style="margin-left:6px;font-size:10px;color:var(--gris-medio);">total</span>
+    </div>
+    <div class="hon-letras" id="letras-${id}">—</div>
+    <div class="hon-cuotas-row">
+      <span class="hon-cuotas-label">Dividido en</span>
+      <input class="hon-cuotas-n" type="number" placeholder="0" id="cuotas-${id}" min="1" oninput="calcCuota('${id}')">
+      <span class="hon-cuotas-label">cuotas mensuales de</span>
+      <span class="hon-cuota-valor" id="cuota-val-${id}">$ —</span>
+    </div>
+    <div class="hon-unidad-row">
+      <div class="uc activo" onclick="setUC(this,'${id}')">Pesos</div>
+      <div class="uc" onclick="setUC(this,'${id}')">Dólares</div>
+    </div>
+    <div class="hon-dolar-ref" id="dref-${id}">
+      <span>Tipo de cambio de referencia:</span>
+      <input type="text" placeholder="Ej: BNA vendedor del día de pago">
+    </div>
+    <div class="ajuste-toggle" onclick="this.classList.toggle('activo')">
+      <div class="atc"></div><div class="at-label">Incluir ajuste por CAC en las cuotas</div>
+    </div>
+    <div class="ajuste-detalle">
+      <div class="ad-fila"><span class="ad-label">Periodicidad</span><input type="text" placeholder="Ej: cada 6 meses"></div>
+      <div class="ad-fila"><span class="ad-label">Índice base</span><input type="text" placeholder="Ej: CAC Enero 2026"></div>
+    </div>
+  </div>`;
+}
+
+function calcCuota(id){
+  const total=parseFloat(document.getElementById('monto-'+id)?.value)||0;
+  const n=parseFloat(document.getElementById('cuotas-'+id)?.value)||0;
+  const el=document.getElementById('cuota-val-'+id);
+  if(el)el.textContent=(total>0&&n>0)?'$ '+fmt(total/n):'$ —';
+}
+
+function updateLetras(id){
+  const v=parseFloat(document.getElementById('monto-'+id)?.value)||0;
+  const el=document.getElementById('letras-'+id);
+  if(el)el.textContent=v>0?numLetras(v):'—';
+}
+
+function setUC(el,id){
+  el.closest('.hon-unidad-row').querySelectorAll('.uc').forEach(c=>c.classList.remove('activo'));
+  el.classList.add('activo');
+  const dolar=el.textContent.includes('Dólar')||el.textContent.includes('Dolar');
+  const ref=document.getElementById('dref-'+id);
+  if(ref)ref.classList.toggle('visible',dolar);
+}
+
+function elegirPago(el,id){
+  el.closest('.hon-pago-opts').querySelectorAll('.hpc').forEach(c=>c.classList.remove('activo'));
+  el.classList.add('activo');
+  document.getElementById('pago-el-txt-'+id).textContent=el.textContent;
+  document.getElementById('pago-el-'+id).classList.add('visible');
+  document.getElementById('opts-'+id).style.display='none';
+}
+function cambiarPago(id){
+  document.getElementById('pago-el-'+id).classList.remove('visible');
+  document.getElementById('opts-'+id).style.display='flex';
+}
+
+function calcTotalHonorarios(){
+  let total=0;
+  document.querySelectorAll('.hon-monto-input').forEach(i=>{total+=parseFloat(i.value)||0;});
+  document.getElementById('hon-total').textContent=total>0?'$ '+fmt(total):'$ —';
+}
+
+// ── HONORARIOS TABS ──
+function cambiarHon(cual,btn){
+  document.querySelectorAll('.hon-tab').forEach(b=>b.classList.remove('activa'));
+  document.querySelectorAll('.hon-panel').forEach(p=>p.classList.remove('visible'));
+  btn.classList.add('activa');
+  document.getElementById('hon-'+cual).classList.add('visible');
+}
+
+// ── CAPBA ──
+function calcCapba(){
+  const h=parseFloat(document.getElementById('capba-hon').value)||0;
+  const pC=parseFloat(document.getElementById('capba-porc-c').value)||0;
+  const pE=parseFloat(document.getElementById('capba-porc-e').value)||0;
+  const rC=h*(pC/100),rE=h*(pE/100);
+  document.getElementById('capba-res-c').textContent=rC>0?'$ '+fmt(rC):'$ —';
+  document.getElementById('capba-res-e').textContent=rE>0?'$ '+fmt(rE):'$ —';
+  document.getElementById('capba-res-total').textContent=(rC+rE)>0?'$ '+fmt(rC+rE):'$ —';
+}
+
+// ── CAC ──
+function setCacTipo(el){
+  el.closest('.cac-tipo-row').querySelectorAll('.cac-tipo-chip').forEach(c=>c.classList.remove('activo'));
+  el.classList.add('activo');
+}
+
+function calcCAC(){
+  const base=parseFloat(document.getElementById('cac-base').value)||0;
+  const actual=parseFloat(document.getElementById('cac-actual').value)||0;
+  const saldo=parseFloat(document.getElementById('cac-saldo').value)||0;
+  if(base>0&&actual>0){
+    const coef=(actual/base);
+    document.getElementById('cac-coef').value=coef.toFixed(4);
+    const ajustado=saldo*coef;
+    const dif=ajustado-saldo;
+    document.getElementById('cac-resultado-val').textContent=ajustado>0?'$ '+fmt(ajustado):'$ —';
+    document.getElementById('cac-diferencia').textContent=dif!==0?'$ '+fmt(dif):'$ —';
+  }else{
+    document.getElementById('cac-coef').value='';
+    document.getElementById('cac-resultado-val').textContent='$ —';
+    document.getElementById('cac-diferencia').textContent='$ —';
+  }
+}
+
+function registrarAjusteCAC(){
+  const base=document.getElementById('cac-base').value;
+  const actual=document.getElementById('cac-actual').value;
+  const coef=document.getElementById('cac-coef').value;
+  const resultado=document.getElementById('cac-resultado-val').textContent;
+  if(!base||!actual||!coef||coef==='')return;
+  const tbody=document.getElementById('cac-hist-body');
+  const fecha=new Date().toLocaleDateString('es-AR');
+  if(tbody.querySelector('td[colspan]'))tbody.innerHTML='';
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td>${fecha}</td><td>${base}</td><td>${actual}</td><td>${coef}</td><td>${resultado}</td>`;
+  tbody.appendChild(tr);
+}
+
+// ── ESTADOS Y SELLO ──
+function setEstado(btn,estado){
+  const bloqueado=['enviado','aceptado','rechazado','vencido'].includes(estado);
+  if(bloqueado){
+    const actual=document.querySelector('.eb.activo');
+    const estadoActual=actual?actual.classList[1]:'borrador';
+    if(estadoActual==='borrador'||confirm(`¿Confirmar cambio de estado a "${estado.toUpperCase()}"? Esto bloqueará la edición del documento.`)){
+      aplicarEstado(btn,estado);
+    }
+  }else{
+    aplicarEstado(btn,estado);
+    habilitarEdicion();
+  }
+}
+
+function aplicarEstado(btn,estado){
+  document.querySelectorAll('.eb').forEach(b=>b.classList.remove('activo'));
+  btn.classList.add('activo');
+  const colores={borrador:'#C8B89A',enviado:'#1a1a1a',aceptado:'#3a7d4a',rechazado:'#8b3a3a',vencido:'#888'};
+  const textos={enviado:'ENVIADO',aceptado:'ACEPTADO',rechazado:'RECHAZADO',vencido:'VENCIDO'};
+  const sello=document.getElementById('sello');
+  if(estado==='borrador'){sello.classList.remove('visible');}
+  else{
+    sello.classList.add('visible');
+    const color=colores[estado];
+    document.getElementById('sc1').setAttribute('stroke',color);
+    document.getElementById('sc2').setAttribute('stroke',color);
+    const t=document.getElementById('sello-txt');
+    t.setAttribute('fill',color);
+    t.textContent=textos[estado];
+  }
+}
+
+function habilitarEdicion(){
+  document.querySelectorAll('.hoja input,.hoja textarea,.hoja select').forEach(el=>{
+    el.removeAttribute('disabled');
+  });
+}
+
+// ── OBSERVACIONES INTERNAS ──
+function actualizarObsInternas(){
+  const container=document.getElementById('obs-internas');
+  const tareas=[];
+  document.querySelectorAll('.sub-item.activa').forEach(item=>{
+    const sn=item.querySelector('.sn');
+    const oi=item.querySelector('.otros-input');
+    const nombre=oi&&oi.value?oi.value:(sn?sn.textContent.trim():'');
+    if(nombre)tareas.push(nombre);
+  });
+  if(tareas.length===0){
+    container.innerHTML='<div style="font-size:9px;color:var(--gris-medio);font-style:italic;">Seleccioná tareas para agregar observaciones internas.</div>';
+    return;
+  }
+  // Mantener las existentes, agregar las nuevas
+  const existentes=new Set([...container.querySelectorAll('.obs-int-titulo')].map(el=>el.textContent));
+  tareas.forEach(tarea=>{
+    if(!existentes.has(tarea)){
+      const fecha=new Date().toLocaleDateString('es-AR');
+      const div=document.createElement('div');
+      div.className='obs-int-item';
+      div.innerHTML=`
+        <div class="obs-int-header">
+          <div class="obs-int-titulo">${tarea}</div>
+          <div class="obs-int-right">
+            <div class="obs-est-grupo">
+              <button class="obs-est-btn pendiente" onclick="setObsEst(this,'pendiente')">Pendiente</button>
+              <button class="obs-est-btn resuelto" onclick="setObsEst(this,'resuelto')">Resuelto</button>
+            </div>
+            <div class="obs-int-fecha">${fecha}</div>
+          </div>
+        </div>
+        <textarea class="obs-int-texto" placeholder="Notas internas sobre esta tarea..."></textarea>
+      `;
+      container.appendChild(div);
+    }
+  });
+}
+
+function setObsEst(btn,estado){
+  const g=btn.closest('.obs-est-grupo');
+  g.querySelectorAll('.obs-est-btn').forEach(b=>{b.classList.remove('activo','pendiente','resuelto');});
+  btn.classList.add('activo',estado);
+}
+
+// ── CONDICIONES RESULTADO ──
+function actualizarCondResultado(){
+  const indice=document.getElementById('cond-indice')?.value||'CAC';
+  const period=document.getElementById('cond-period')?.value||'';
+  const el=document.getElementById('cond-ajuste-resultado');
+  if(el)el.textContent=`Los honorarios serán actualizados según el Índice ${indice} publicado por la Cámara Argentina de la Construcción${period?', con periodicidad '+period:''}`;
+  const plazo=document.getElementById('cond-plazo')?.value||'';
+  const elp=document.getElementById('cond-plazo-resultado');
+  if(elp&&plazo)elp.textContent=`Plazo estimado de ejecución: ${plazo}. El plazo indicado es estimativo y sujeto a los tiempos de gestión de organismos intervinientes.`;
+}
+
+// ── FORMATO ──
+function fmt(n){return n.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+// ── NÚMERO A LETRAS ──
+function numLetras(num){
+  const u=['','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once','doce','trece','catorce','quince','dieciséis','diecisiete','dieciocho','diecinueve'];
+  const d=['','','veinte','treinta','cuarenta','cincuenta','sesenta','setenta','ochenta','noventa'];
+  const c=['','ciento','doscientos','trescientos','cuatrocientos','quinientos','seiscientos','setecientos','ochocientos','novecientos
