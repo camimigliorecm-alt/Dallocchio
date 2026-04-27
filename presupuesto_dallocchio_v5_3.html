@@ -2131,20 +2131,17 @@ async function cargarProyecto(id){
 
 // ── ELIMINAR PROYECTO ──
 async function eliminarProyecto(id,nombre){
-  const url=getSheetDbUrl();
-  if(!url)return;
   if(!confirm('¿Eliminar "'+nombre+'"? Esta acción no se puede deshacer.'))return;
-  try{
-    const res=await fetch(url+'/id/'+id,{method:'DELETE'});
-    if(!res.ok)throw new Error('Error '+res.status);
-    document.getElementById('card-'+id)?.remove();
-    showToast('Proyecto eliminado');
-    const lista=document.getElementById('proy-lista');
-    if(lista&&!lista.querySelector('.proy-card'))lista.innerHTML='<div class="proy-empty">No hay proyectos con este estado.</div>';
-  }catch(e){
-    showToast('Error al eliminar.');
-    console.error(e);
+  // Eliminar de localStorage inmediatamente
+  dbEliminar(id);
+  document.getElementById('card-'+id)?.remove();
+  showToast('Proyecto eliminado');
+  const lista=document.getElementById('proy-lista');
+  if(lista&&!lista.querySelector('.proy-card')){
+    lista.innerHTML='<div class="proy-empty">No hay proyectos con este estado.</div>';
   }
+  // Intentar eliminar de SheetDB en background
+  sheetdbEliminar(id);
 }
 
 </script>
