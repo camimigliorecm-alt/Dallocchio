@@ -1711,65 +1711,97 @@ function toggleTipo(el,nombre){
   const yaActivo=el.classList.contains('activo');
   document.querySelectorAll('.tipo-chip').forEach(c=>c.classList.remove('activo'));
   if(!yaActivo)el.classList.add('activo');
-  const activos=[...document.querySelectorAll('.tipo-chip.activo')].map(c=>c.textContent.replace('✓','').trim());
-  document.getElementById('titulo-sub').textContent=activos.length?activos.join(' · '):'—';
-  document.getElementById('enc-esp').textContent=activos.length?activos.join(' · '):'Arquitectura · Instalaciones de Gas · Obras Sanitarias';
-  const arq=activos.some(a=>a.includes('Arquitectura'));
-  document.getElementById('bloque-indicadores').style.display=arq?'block':'none';
-  document.getElementById('bloque-superficies').style.display=arq?'block':'none';
-  const pre=document.querySelector('.ni-pre');
-  if(pre&&activos.length===1){
-    if(activos[0].includes('Gas'))pre.value='GAS';
-    else if(activos[0].includes('Sanitarias'))pre.value='OSM';
-    else pre.value='ARQ';
-  }else if(pre&&activos.length>1)pre.value='PRO';
-  actualizarClausula(activos);
+  // actualizarDisciplinas maneja todos los display changes de forma segura
   actualizarDisciplinas();
+  actualizarClausula([...document.querySelectorAll('.tipo-chip.activo')].map(c=>c.textContent.replace('✓','').trim()));
 }
 
 // ══════════════════════════════════════════
-// ── GESTIÓN DE PROYECTOS (SheetDB) ──
+// ── GESTIÓN DE PROYECTOS ──
+// localStorage (siempre) + SheetDB (cuando esté disponible)
 // ══════════════════════════════════════════
 
+const DB_KEY='dallocchio_proyectos_v3';
 let filtroEstadoActual='todos';
-let proyectoIdActual=null; // ID del proyecto cargado/guardado en esta sesión
+let proyectoIdActual=null;
 
-function getSheetDbUrl(){
-  return localStorage.getItem('dallocchio_sheetdb_url')||'';
+// ── localStorage CRUD ──
+function dbLeer(){try{return JSON.parse(localStorage.getItem(DB_KEY)||'[]');}catch(e){return[];}}
+function dbGuardar(lista){try{localStorage.setItem(DB_KEY,JSON.stringify(lista));}catch(e){console.error('localStorage error',e);}}
+function dbUpsert(p){const l=dbLeer();const i=l.findIndex(x=>x.id===p.id);if(i>=0)l[i]=p;else l.push(p);dbGuardar(l);}
+function dbEliminar(id){dbGuardar(dbLeer().filter(p=>p.id!==id));}
+
+// ── SheetDB (best-effort, silencioso ante CORS) ──
+function getSheetDbUrl(){return localStorage.getItem('dallocchio_sheetdb_url')||'';}
+
+async function sheetdbPush(proyecto){
+  const url=getSheetDbUrl();if(!url)return;
+  try{
+    const ahora=proyecto.fecha_modificacion;
+    const res=await fetch(url+'/id/'+proyecto.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:{...proyecto}})});
+    if(res.status===422||res.status===404){
+      // Registro no existe: crear
+      await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:[proyecto]})});
+    }
+  }catch(e){console.warn('SheetDB no disponible (CORS/red):',e.message);}
 }
 
+async function sheetdbEliminar(id){
+  const url=getSheetDbUrl();if(!url)return;
+  try{await fetch(url+'/id/'+id,{method:'DELETE'});}catch(e){console.warn('SheetDB delete falló:',e.message);}
+}
+
+async function sheetdbSincronizar(){
+  const url=getSheetDbUrl();if(!url)return;
+  try{
+    const res=await fetch(url);
+    if(!res.ok)return;
+    const data=await res.json();
+    const remotos=Array.isArray(data)?data:(data.data||[]);
+    if(remotos.length){remotos.forEach(p=>dbUpsert(p));return true;}
+  }catch(e){console.warn('SheetDB sync:',e.message);}
+  return false;
+}
+
+// ── UI del panel ──
 function abrirPanelProyectos(){
-  document.getElementById('proy-overlay').classList.add('visible');
-  document.getElementById('proy-drawer').classList.add('visible');
+  const overlay=document.getElementById('proy-overlay');
+  const drawer=document.getElementById('proy-drawer');
+  if(!overlay||!drawer){console.error('Panel HTML no encontrado');return;}
+  overlay.classList.add('visible');
+  drawer.classList.add('visible');
   const url=getSheetDbUrl();
-  document.getElementById('proy-url-field').value=url;
-  if(url)cargarListaProyectos(filtroEstadoActual);
-  else{
-    document.getElementById('proy-config-body').classList.add('open');
-    document.getElementById('proy-lista').innerHTML='<div class="proy-empty">Configurá la URL de SheetDB para ver tus proyectos.</div>';
-  }
+  const campo=document.getElementById('proy-url-field');
+  if(campo)campo.value=url;
+  cargarListaProyectos(filtroEstadoActual);
 }
 
 function cerrarPanelProyectos(){
-  document.getElementById('proy-overlay').classList.remove('visible');
-  document.getElementById('proy-drawer').classList.remove('visible');
+  document.getElementById('proy-overlay')?.classList.remove('visible');
+  document.getElementById('proy-drawer')?.classList.remove('visible');
 }
 
 function toggleConfigPanel(){
   const body=document.getElementById('proy-config-body');
   const btn=document.getElementById('proy-config-toggle-btn');
+  if(!body||!btn)return;
   const open=body.classList.toggle('open');
   btn.textContent=open?'Ocultar':'Configurar';
 }
 
 function guardarUrlSheetDb(){
-  const url=document.getElementById('proy-url-field').value.trim();
+  const campo=document.getElementById('proy-url-field');
+  const url=campo?.value.trim();
   if(!url){showToast('Ingresá la URL de SheetDB');return;}
   localStorage.setItem('dallocchio_sheetdb_url',url);
-  document.getElementById('proy-config-body').classList.remove('open');
-  document.getElementById('proy-config-toggle-btn').textContent='Configurar';
-  showToast('URL guardada');
-  cargarListaProyectos(filtroEstadoActual);
+  document.getElementById('proy-config-body')?.classList.remove('open');
+  const btn=document.getElementById('proy-config-toggle-btn');
+  if(btn)btn.textContent='Configurar';
+  showToast('URL guardada — sincronizando...');
+  sheetdbSincronizar().then(ok=>{
+    if(ok){showToast('Proyectos sincronizados desde Sheets ✓');}
+    cargarListaProyectos(filtroEstadoActual);
+  });
 }
 
 function filtrarProyectos(estado,btn){
@@ -1779,58 +1811,53 @@ function filtrarProyectos(estado,btn){
   cargarListaProyectos(estado);
 }
 
-async function cargarListaProyectos(estado){
-  const url=getSheetDbUrl();
-  if(!url){
-    document.getElementById('proy-lista').innerHTML='<div class="proy-empty">Configurá la URL de SheetDB primero (clic en "Configurar" arriba).</div>';
-    return;
-  }
-  document.getElementById('proy-lista').innerHTML='<div class="proy-empty">Cargando proyectos...</div>';
-  try{
-    // SheetDB: para "todos" usamos el endpoint base, para filtros usamos /search
-    let endpoint=url;
-    if(estado&&estado!=='todos')endpoint=url+'/search?estado='+encodeURIComponent(estado)+'&limit=200';
-    else endpoint=url+'?limit=200';
-    const res=await fetch(endpoint,{mode:'cors'});
-    if(!res.ok){
-      const txt=await res.text().catch(()=>'');
-      throw new Error('SheetDB respondió '+res.status+(txt?' — '+txt.slice(0,80):''));
+function cargarListaProyectos(estado){
+  // Leer desde localStorage (siempre disponible, sin CORS)
+  let lista=dbLeer();
+  if(estado&&estado!=='todos')lista=lista.filter(p=>p.estado===estado);
+  lista.sort((a,b)=>new Date(b.fecha_modificacion||b.fecha_creacion||0)-new Date(a.fecha_modificacion||a.fecha_creacion||0));
+  renderizarListaProyectos(lista);
+  // Intentar sincronizar con SheetDB en background
+  sheetdbSincronizar().then(ok=>{
+    if(ok){
+      let actualizada=dbLeer();
+      if(estado&&estado!=='todos')actualizada=actualizada.filter(p=>p.estado===estado);
+      actualizada.sort((a,b)=>new Date(b.fecha_modificacion||b.fecha_creacion||0)-new Date(a.fecha_modificacion||a.fecha_creacion||0));
+      renderizarListaProyectos(actualizada);
     }
-    const data=await res.json();
-    // SheetDB puede devolver array directo o {data:[...]}
-    const proyectos=Array.isArray(data)?data:(Array.isArray(data.data)?data.data:[]);
-    renderizarListaProyectos(proyectos);
-  }catch(e){
-    document.getElementById('proy-lista').innerHTML=
-      `<div class="proy-empty">Error al cargar proyectos.<br><small style="color:var(--rojo)">${e.message}</small><br><br>
-       <button onclick="cargarListaProyectos('${estado}')" style="padding:5px 12px;background:var(--negro);color:white;border:none;font-family:Montserrat,sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;">↺ Reintentar</button></div>`;
-    console.error(e);
-  }
+  });
 }
 
-function renderizarListaProyectos(proyectos){
-  const lista=document.getElementById('proy-lista');
-  if(!proyectos||proyectos.length===0){lista.innerHTML='<div class="proy-empty">No hay proyectos guardados con este estado.</div>';return;}
-  // Ordenar por fecha_modificacion desc
-  proyectos.sort((a,b)=>new Date(b.fecha_modificacion||b.fecha_creacion||0)-new Date(a.fecha_modificacion||a.fecha_creacion||0));
-  lista.innerHTML=proyectos.map(p=>`
-    <div class="proy-card" id="card-${p.id}">
+function renderizarListaProyectos(lista){
+  const el=document.getElementById('proy-lista');
+  if(!el)return;
+  if(!lista||lista.length===0){
+    el.innerHTML='<div class="proy-empty">No hay proyectos guardados con este filtro.<br><small style="color:var(--gris-medio)">Hacé clic en 💾 Guardar para registrar el presupuesto actual.</small></div>';
+    return;
+  }
+  el.innerHTML=lista.map(p=>{
+    const id=String(p.id||'').replace(/'/g,'');
+    const num=String(p.numero||'Sin número').replace(/</g,'&lt;');
+    const cli=String(p.cliente||'Sin cliente').replace(/</g,'&lt;');
+    const est=String(p.estado||'borrador');
+    const num2=String(p.numero||'este proyecto').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return`<div class="proy-card" id="card-${id}">
       <div class="proy-card-top">
-        <div class="proy-card-num">${p.numero||'Sin número'}</div>
-        <div class="proy-card-estado ${p.estado||'borrador'}">${(p.estado||'borrador').toUpperCase()}</div>
+        <div class="proy-card-num">${num}</div>
+        <div class="proy-card-estado ${est}">${est.toUpperCase()}</div>
       </div>
-      <div class="proy-card-cliente">${p.cliente||'Sin cliente'}</div>
+      <div class="proy-card-cliente">${cli}</div>
       <div class="proy-card-meta">
         <span>📐 ${p.tipo||'—'}</span>
         <span>💰 ${p.honorarios?'$ '+p.honorarios:'—'}</span>
         <span>📅 ${p.fecha_modificacion||p.fecha_creacion||'—'}</span>
       </div>
       <div class="proy-card-actions">
-        <button class="pca-btn" onclick="cargarProyecto('${p.id}')">📂 Abrir</button>
-        <button class="pca-btn danger" onclick="eliminarProyecto('${p.id}','${(p.numero||'este proyecto').replace(/'/g,"\\'")}')">🗑 Eliminar</button>
+        <button class="pca-btn" onclick="cargarProyecto('${id}')">📂 Abrir</button>
+        <button class="pca-btn danger" onclick="eliminarProyecto('${id}','${num2}')">🗑 Eliminar</button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 // ── SERIALIZAR FORMULARIO ──
