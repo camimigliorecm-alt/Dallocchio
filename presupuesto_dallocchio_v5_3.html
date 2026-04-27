@@ -1051,7 +1051,7 @@ function nuevoPresupuesto(){
 function generarPresupuesto(){
   const activos=[...document.querySelectorAll('.tipo-chip.activo')].map(c=>c.textContent.replace('✓','').trim());
   if(activos.length===0){showToast('Seleccioná al menos un tipo de servicio');return;}
-  const pre=activos.length===1?(activos[0].includes('Gas')?'GAS':activos[0].includes('Sanit')?'OSM':'ARQ'):'PRO';
+  const pre=activos.length===1?(activos[0].includes('Gas')?'GAS':activos[0].includes('Sanitarias')?'OSM':'ARQ'):'PRO';
   const anio=new Date().getFullYear();
   const num=String(correlativo).padStart(3,'0');
   document.getElementById('ni-pre').value=pre;
@@ -1098,7 +1098,7 @@ function actualizarDisciplinas(){
   const pre=document.getElementById('ni-pre');
   if(pre&&activos.length===1){
     if(activos[0].includes('Gas'))pre.value='GAS';
-    else if(activos[0].includes('Sanit'))pre.value='OSM';
+    else if(activos[0].includes('Sanitarias'))pre.value='OSM';
     else pre.value='ARQ';
   }else if(pre&&activos.length>1)pre.value='PRO';
   
@@ -1137,9 +1137,6 @@ function toggleOjo(id){
 function toggleTipo(el,nombre){
   el.classList.toggle('activo');
   const activos=[...document.querySelectorAll('.tipo-chip.activo')].map(c=>c.textContent.replace('✓','').trim());
-  const arq=activos.some(a=>a.includes('Arquitectura'));
-  const gas=activos.some(a=>a.includes('Gas'));
-  const osm=activos.some(a=>a.includes('Sanitarias'));
   document.getElementById('titulo-sub').textContent=activos.length?activos.join(' · '):'—';
   document.getElementById('enc-esp').textContent=activos.length?activos.join(' · '):'Arquitectura · Instalaciones de Gas · Obras Sanitarias';
   const arq=activos.some(a=>a.includes('Arquitectura'));
@@ -1147,11 +1144,11 @@ function toggleTipo(el,nombre){
   document.getElementById('bloque-superficies').style.display=arq?'block':'none';
   // Prefijo automático
   const pre=document.querySelector('.ni-pre');
-  if(activos.length===1){
+  if(pre&&activos.length===1){
     if(activos[0].includes('Gas'))pre.value='GAS';
     else if(activos[0].includes('Sanitarias'))pre.value='OSM';
     else pre.value='ARQ';
-  }else if(activos.length>1)pre.value='PRO';
+  }else if(pre&&activos.length>1)pre.value='PRO';
   // Cláusula deslinde
   actualizarClausula(activos);
 }
