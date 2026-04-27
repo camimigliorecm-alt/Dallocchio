@@ -560,7 +560,7 @@ body{font-family:'Montserrat',sans-serif;background:#dedad4;color:var(--negro);p
   <div class="tb-right">
     <button onclick="abrirPanelProyectos()" style="padding:5px 12px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.2);font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">📂 Proyectos</button>
     <button onclick="guardarProyecto()" style="padding:5px 12px;background:rgba(200,184,154,.2);color:var(--beige);border:1px solid rgba(200,184,154,.4);font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">💾 Guardar</button>
-    <button class="btn-nuevo" id="btn-nuevo" onclick="nuevoPresupuesto()" style="padding:5px 12px;background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">+ Nuevo</button><button class="btn-imprimir" id="btn-generar" onclick="generarPresupuesto()" style="padding:5px 14px;background:var(--beige);color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Generar presupuesto</button><button class="btn-imprimir" id="btn-imprimir-real" onclick="mostrarModalImpresion()" style="display:none;padding:5px 14px;background:white;color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Imprimir / PDF</button>
+    <button class="btn-nuevo" id="btn-nuevo" onclick="nuevoPresupuesto()" style="padding:5px 12px;background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">+ Nuevo</button><button class="btn-imprimir" id="btn-generar" onclick="generarPresupuesto()" style="padding:5px 14px;background:var(--beige);color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Generar presupuesto</button><button class="btn-imprimir" id="btn-imprimir-real" onclick="mostrarModalImpresion()" style="padding:5px 14px;background:white;color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Imprimir / PDF</button>
   </div>
 </div>
 
@@ -1781,18 +1781,29 @@ function filtrarProyectos(estado,btn){
 
 async function cargarListaProyectos(estado){
   const url=getSheetDbUrl();
-  if(!url){document.getElementById('proy-lista').innerHTML='<div class="proy-empty">Configurá la URL de SheetDB primero.</div>';return;}
+  if(!url){
+    document.getElementById('proy-lista').innerHTML='<div class="proy-empty">Configurá la URL de SheetDB primero (clic en "Configurar" arriba).</div>';
+    return;
+  }
   document.getElementById('proy-lista').innerHTML='<div class="proy-empty">Cargando proyectos...</div>';
   try{
+    // SheetDB: para "todos" usamos el endpoint base, para filtros usamos /search
     let endpoint=url;
-    if(estado&&estado!=='todos')endpoint=url+'/search?estado='+estado;
-    const res=await fetch(endpoint,{headers:{'Content-Type':'application/json'}});
-    if(!res.ok)throw new Error('Error '+res.status);
+    if(estado&&estado!=='todos')endpoint=url+'/search?estado='+encodeURIComponent(estado)+'&limit=200';
+    else endpoint=url+'?limit=200';
+    const res=await fetch(endpoint);
+    if(!res.ok){
+      const txt=await res.text();
+      throw new Error('SheetDB respondió '+res.status+': '+txt.slice(0,80));
+    }
     const data=await res.json();
-    const proyectos=Array.isArray(data)?data:(data.data||[]);
+    // SheetDB puede devolver array directo o {data:[...]}
+    const proyectos=Array.isArray(data)?data:(Array.isArray(data.data)?data.data:[]);
     renderizarListaProyectos(proyectos);
   }catch(e){
-    document.getElementById('proy-lista').innerHTML='<div class="proy-empty">Error al cargar proyectos. Verificá la URL de SheetDB.</div>';
+    document.getElementById('proy-lista').innerHTML=
+      `<div class="proy-empty">Error al cargar proyectos.<br><small style="color:var(--rojo)">${e.message}</small><br><br>
+       <button onclick="cargarListaProyectos('${estado}')" style="padding:5px 12px;background:var(--negro);color:white;border:none;font-family:Montserrat,sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;">↺ Reintentar</button></div>`;
     console.error(e);
   }
 }
@@ -1918,48 +1929,96 @@ function deserializarFormulario(datos){
   if(datos.bloques_ocultos)datos.bloques_ocultos.forEach(id=>{const el=document.getElementById(id);if(el){el.classList.add('oculto-pdf');const btn=document.getElementById('ojo-'+id.replace('bloque-','').replace('contenido-',''));if(btn)btn.textContent='🙈';}});
 }
 
-// ── EXTRAER DATOS RESUMEN DEL FORMULARIO ──
+// ── EXTRAER DATOS RESUMEN DEL FORMULARIO (todas las columnas legibles) ──
 function extraerResumen(){
-  const campos=document.querySelectorAll('#hoja .campo-valor');
-  // Orden en el DOM: [0]=nombre, [1]=dni, [2]=iva, [3]=domicilio, [4]=localidad, [5]=telefono
-  //                  [6]=partida, [7]=dir_obra, [8]=localidad_obra, [9]=terreno_m2
-  const get=i=>campos[i]?.value||'';
+  // Selectores base
+  const cv=document.querySelectorAll('#hoja .campo-valor');
+  const ci=document.querySelectorAll('#hoja .cat-input');
+  const ii=document.querySelectorAll('#hoja .ind-input');
+  const g=i=>cv[i]?.value||'';
+  const cat=i=>ci[i]?.value||'';
+  const ind=i=>ii[i]?.value||'';
+
+  // Tipo y número
   const chips=[...document.querySelectorAll('.tipo-chip.activo')].map(c=>c.textContent.replace('✓','').trim());
   const tipo=chips.length>0?(chips[0].includes('Gas')?'GAS':chips[0].includes('Sanitarias')?'OSM':'ARQ'):'—';
   const preEl=document.getElementById('ni-pre');
   const numero=(presupuestoGenerado&&preEl?.value)
     ?(preEl.value+'-'+(document.getElementById('ni-yr')?.value||'')+'-'+(document.getElementById('ni-num')?.value||''))
     :'Sin número';
+
+  // Honorarios
   const honTotalText=document.getElementById('hon-total')?.textContent||'';
-  const honTotal=honTotalText.replace(/[$\s]/g,'').replace(/\./g,'').replace(',','.');
-  // M2 superficies
-  const m2Proy=document.getElementById('tot-proy')?.value||'';
-  const m2Exist=document.getElementById('tot-exist')?.value||'';
-  const m2Dem=document.getElementById('tot-dem')?.value||'';
-  // Precio en dólares: buscar inputs de referencia dólar visibles en los bloques
-  let honDolar='';
+  const honorarios=honTotalText.replace(/[$\s]/g,'').replace(/\./g,'').replace(',','.');
+  let honorarios_dolares='';
   const dolarInputs=[...document.querySelectorAll('.hon-dolar-ref.visible input')];
-  if(dolarInputs.length){
-    // Tomar el último valor ingresado como referencia (cotización)
-    const cotiz=dolarInputs[0]?.value||'';
-    if(cotiz&&honTotal){
-      const pesos=parseFloat(honTotal)||0;
-      const tc=parseFloat(cotiz)||0;
-      if(tc>0)honDolar=(pesos/tc).toFixed(2);
-    }
+  if(dolarInputs.length&&honorarios){
+    const tc=parseFloat(dolarInputs[0]?.value)||0;
+    const pesos=parseFloat(honorarios)||0;
+    if(tc>0)honorarios_dolares=(pesos/tc).toFixed(2);
   }
+
+  // Tareas seleccionadas (legibles)
+  const tareas_seleccionadas=[...document.querySelectorAll('.sub-item.activa .sn')]
+    .map(el=>el.textContent.trim()).join(' | ');
+
+  // Medios de cobro activos
+  const medios_cobro=[...document.querySelectorAll('.medio-item.activo .medio-nombre')]
+    .map(el=>el.textContent.trim()).join(', ');
+
+  // Estado
+  const estadoBtn=document.querySelector('.eb.activo');
+  const estado=estadoBtn?estadoBtn.classList[1]:'borrador';
+
   return{
-    numero,tipo,
-    cliente:get(0),
-    dni_cuit:get(1),
-    direccion_obra:get(7),
-    localidad_obra:get(8),
-    terreno_m2:get(9),
-    honorarios:honTotal,
-    honorarios_dolares:honDolar,
-    m2_proyectado:m2Proy,
-    m2_existente:m2Exist,
-    m2_demoler:m2Dem,
+    // ── Documento
+    numero,
+    tipo,
+    estado,
+    fecha_doc:       document.getElementById('fecha-doc')?.value||'',
+    revision:        document.getElementById('ni-rev')?.value||'',
+
+    // ── Comitente
+    cliente:         g(0),
+    dni_cuit:        g(1),
+    condicion_iva:   g(2),
+    domicilio_comitente: g(3),
+    localidad_comitente: g(4),
+    telefono_email:  g(5),
+
+    // ── Parcela / Obra
+    partida_inmobiliaria: g(6),
+    catastral_circ:  cat(0),
+    catastral_secc:  cat(1),
+    catastral_manz:  cat(2),
+    catastral_parc:  cat(3),
+    direccion_obra:  g(7),
+    localidad_obra:  g(8),
+    terreno_m2:      g(9),
+
+    // ── Indicadores urbanísticos
+    zona:            ind(0),
+    fos:             ind(1),
+    fot:             ind(2),
+    densidad:        ind(3),
+
+    // ── Superficies
+    m2_proyectado:   document.getElementById('tot-proy')?.value||'',
+    m2_existente:    document.getElementById('tot-exist')?.value||'',
+    m2_demoler:      document.getElementById('tot-dem')?.value||'',
+
+    // ── Honorarios
+    honorarios,
+    honorarios_dolares,
+
+    // ── Tareas y medios
+    tareas_seleccionadas,
+    medios_cobro,
+
+    // ── Condiciones y observaciones
+    condiciones_generales: document.querySelector('.cond-textarea')?.value||'',
+    validez_hasta:   document.querySelector('.cv-input')?.value||'',
+    observaciones:   document.querySelector('.obs-area')?.value||'',
   };
 }
 
@@ -1969,14 +2028,11 @@ async function guardarProyecto(){
   if(!url){showToast('Configurá SheetDB primero (📂 Proyectos → Configurar)');return;}
   const datos=serializarFormulario();
   const resumen=extraerResumen();
-  const{numero,tipo,cliente,dni_cuit,direccion_obra,localidad_obra,terreno_m2,honorarios,honorarios_dolares,m2_proyectado,m2_existente,m2_demoler}=resumen;
   const ahora=new Date().toLocaleDateString('es-AR');
-  const estadoBtn=document.querySelector('.eb.activo');
-  const estado=estadoBtn?estadoBtn.classList[1]:'borrador';
   const saving=document.getElementById('proy-saving');
   if(saving)saving.style.display='block';
   try{
-    const camposComunes={numero,cliente,dni_cuit,tipo,estado,honorarios,honorarios_dolares,m2_proyectado,m2_existente,m2_demoler,terreno_m2,direccion_obra,localidad_obra,fecha_modificacion:ahora,datos_json:JSON.stringify(datos)};
+    const camposComunes={...resumen,fecha_modificacion:ahora,datos_json:JSON.stringify(datos)};
     if(proyectoIdActual){
       // Actualizar proyecto existente en esta sesión
       const res=await fetch(url+'/id/'+proyectoIdActual,{
@@ -2094,8 +2150,8 @@ async function eliminarProyecto(id,nombre){
     <div class="proy-config-body" id="proy-config-body">
       <input class="proy-url-input" id="proy-url-field" type="text" placeholder="https://sheetdb.io/api/v1/xxxxxxxx">
       <div class="proy-url-hint">
-        1. Creá una hoja en <a href="https://sheets.google.com" target="_blank">Google Sheets</a> con estas columnas en la fila 1:<br>
-        <strong>id · numero · cliente · dni_cuit · tipo · estado · honorarios · honorarios_dolares · m2_proyectado · m2_existente · m2_demoler · terreno_m2 · direccion_obra · localidad_obra · fecha_creacion · fecha_modificacion · datos_json</strong><br><br>
+        1. Creá una hoja en <a href="https://sheets.google.com" target="_blank">Google Sheets</a> con estas columnas en la fila 1 (copiá y pegá tal cual):<br><br>
+        <strong style="font-size:7px;line-height:2;word-break:break-all;">id · numero · tipo · estado · fecha_doc · revision · cliente · dni_cuit · condicion_iva · domicilio_comitente · localidad_comitente · telefono_email · partida_inmobiliaria · catastral_circ · catastral_secc · catastral_manz · catastral_parc · direccion_obra · localidad_obra · terreno_m2 · zona · fos · fot · densidad · m2_proyectado · m2_existente · m2_demoler · honorarios · honorarios_dolares · tareas_seleccionadas · medios_cobro · condiciones_generales · validez_hasta · observaciones · fecha_creacion · fecha_modificacion · datos_json</strong><br><br>
         2. Registrate en <a href="https://sheetdb.io" target="_blank">sheetdb.io</a> (gratis), conectá tu hoja y copiá la URL de la API aquí.
       </div>
       <button class="proy-url-save" onclick="guardarUrlSheetDb()">Guardar configuración</button>
