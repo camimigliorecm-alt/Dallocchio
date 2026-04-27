@@ -458,7 +458,45 @@ body{font-family:'Montserrat',sans-serif;background:#dedad4;color:var(--negro);p
   /* Pago: ocultar opciones no elegidas */
   .hon-pago-opts{display:none!important;}
   .hon-pago-elegido.visible{display:flex!important;}
+
+  /* ── CHECKMARKS VISIBLES EN TAREAS SELECCIONADAS ── */
+  .sub-item.activa{padding-left:4px!important;}
+  .sub-item.activa .sc{display:none!important;}
+  .sub-item.activa .sn::before{
+    content:'✓  ';
+    font-weight:800;
+    font-size:8px;
+    color:var(--negro);
+    letter-spacing:0;
+  }
+  /* Medios de cobro activos */
+  .medio-item.activo .mch{display:none!important;}
+  .medio-item.activo .medio-nombre::before{content:'✓  ';font-weight:800;font-size:8px;color:var(--negro);}
+  /* Ocultar medios no activos */
+  .medio-item:not(.activo){display:none!important;}
 }
+
+/* ══ MODAL IMPRESIÓN ══ */
+.print-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:none;align-items:center;justify-content:center;}
+.print-overlay.visible{display:flex;}
+.print-modal{background:white;width:420px;max-width:95vw;border-radius:3px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.25);}
+.print-modal-header{background:var(--negro);color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
+.print-modal-title{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;}
+.print-modal-close{background:none;border:none;color:rgba(255,255,255,.6);font-size:18px;cursor:pointer;line-height:1;}
+.print-modal-close:hover{color:white;}
+.print-modal-body{padding:20px;}
+.print-modal-desc{font-size:9px;color:var(--gris-medio);margin-bottom:14px;line-height:1.6;}
+.print-opcion{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f5f5f5;cursor:pointer;user-select:none;}
+.print-opcion:last-child{border-bottom:none;}
+.print-check{width:15px;height:15px;border:1.5px solid var(--gris-claro);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;transition:all .15s;}
+.print-opcion.on .print-check{background:var(--negro);border-color:var(--negro);color:white;}
+.print-opcion-label{font-size:9px;font-weight:600;letter-spacing:.06em;color:var(--negro);}
+.print-opcion-desc{font-size:8px;color:var(--gris-medio);margin-top:1px;}
+.print-modal-footer{padding:14px 20px;border-top:1px solid var(--gris-claro);display:flex;gap:8px;justify-content:flex-end;}
+.print-btn{padding:7px 18px;font-family:'Montserrat',sans-serif;font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;border:none;}
+.print-btn-cancel{background:var(--gris-fondo);color:var(--gris-oscuro);}
+.print-btn-ok{background:var(--negro);color:white;}
+.print-btn-ok:hover{background:var(--gris-oscuro);}
 
 /* ══ PANEL PROYECTOS ══ */
 .proy-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;opacity:0;pointer-events:none;transition:opacity .25s;}
@@ -522,7 +560,7 @@ body{font-family:'Montserrat',sans-serif;background:#dedad4;color:var(--negro);p
   <div class="tb-right">
     <button onclick="abrirPanelProyectos()" style="padding:5px 12px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.2);font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">📂 Proyectos</button>
     <button onclick="guardarProyecto()" style="padding:5px 12px;background:rgba(200,184,154,.2);color:var(--beige);border:1px solid rgba(200,184,154,.4);font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">💾 Guardar</button>
-    <button class="btn-nuevo" id="btn-nuevo" onclick="nuevoPresupuesto()" style="padding:5px 12px;background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">+ Nuevo</button><button class="btn-imprimir" id="btn-generar" onclick="generarPresupuesto()" style="padding:5px 14px;background:var(--beige);color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Generar presupuesto</button><button class="btn-imprimir" id="btn-imprimir-real" onclick="window.print()" style="display:none;padding:5px 14px;background:white;color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Imprimir / PDF</button>
+    <button class="btn-nuevo" id="btn-nuevo" onclick="nuevoPresupuesto()" style="padding:5px 12px;background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">+ Nuevo</button><button class="btn-imprimir" id="btn-generar" onclick="generarPresupuesto()" style="padding:5px 14px;background:var(--beige);color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Generar presupuesto</button><button class="btn-imprimir" id="btn-imprimir-real" onclick="mostrarModalImpresion()" style="display:none;padding:5px 14px;background:white;color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Imprimir / PDF</button>
   </div>
 </div>
 
@@ -1182,6 +1220,98 @@ function toggleOjo(id){
 }
 
 // ── TIPO SERVICIO — ver definición completa más abajo (selección única) ──
+
+// ══════════════════════════════════════════
+// ── MODAL DE IMPRESIÓN ──
+// ══════════════════════════════════════════
+
+// Definición de todas las secciones opcionales
+const SECCIONES_PRINT=[
+  {id:'bloque-parcela',     label:'Datos de la parcela',          desc:'Partida, nomenclatura catastral, dirección y sup. del terreno.',  siempre:true},
+  {id:'bloque-indicadores', label:'Indicadores urbanísticos',      desc:'Zona, FOS, FOT, densidad.',                                       siempre:false},
+  {id:'bloque-superficies', label:'Superficies',                   desc:'Cubierta, semicubierta y totales de obra.',                       siempre:false},
+  {id:'doc-contenido',      label:'Documentación requerida',       desc:'Checklist de documentos por organismo.',                          siempre:false, padre:'doc-master-toggle'},
+  {id:'clausula-deslinde',  label:'Cláusula de deslinde',          desc:'Solo aparece cuando hay Gas u Obras Sanitarias.',                 siempre:false},
+];
+
+let _seccionesOcultadasPorModal=[];
+
+function mostrarModalImpresion(){
+  const lista=document.getElementById('print-opciones-lista');
+  lista.innerHTML='';
+  _seccionesOcultadasPorModal=[];
+
+  SECCIONES_PRINT.forEach(sec=>{
+    const el=document.getElementById(sec.id);
+    if(!el)return;
+    // Solo mostrar si la sección está actualmente visible
+    const estilo=window.getComputedStyle(el);
+    if(estilo.display==='none'&&!sec.siempre)return;
+
+    const div=document.createElement('div');
+    div.className='print-opcion on';
+    div.dataset.id=sec.id;
+    div.innerHTML=`
+      <div class="print-check">✓</div>
+      <div>
+        <div class="print-opcion-label">${sec.label}</div>
+        <div class="print-opcion-desc">${sec.desc}</div>
+      </div>`;
+    div.addEventListener('click',()=>{
+      div.classList.toggle('on');
+      const check=div.querySelector('.print-check');
+      check.textContent=div.classList.contains('on')?'✓':'';
+    });
+    lista.appendChild(div);
+  });
+
+  // Si no hay secciones opcionales visibles, mostrar mensaje
+  if(!lista.children.length){
+    lista.innerHTML='<div style="font-size:9px;color:var(--gris-medio);font-style:italic;">No hay secciones opcionales activas en este presupuesto.</div>';
+  }
+
+  document.getElementById('print-overlay').classList.add('visible');
+}
+
+function cerrarModalImpresion(){
+  // Restaurar cualquier sección que hayamos ocultado temporalmente
+  _seccionesOcultadasPorModal.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.classList.remove('oculto-pdf');
+  });
+  _seccionesOcultadasPorModal=[];
+  document.getElementById('print-overlay').classList.remove('visible');
+}
+
+function ejecutarImpresion(){
+  _seccionesOcultadasPorModal=[];
+
+  // Aplicar oculto-pdf a las secciones desactivadas en el modal
+  document.querySelectorAll('#print-opciones-lista .print-opcion').forEach(div=>{
+    if(!div.classList.contains('on')){
+      const el=document.getElementById(div.dataset.id);
+      if(el&&!el.classList.contains('oculto-pdf')){
+        el.classList.add('oculto-pdf');
+        _seccionesOcultadasPorModal.push(div.dataset.id);
+      }
+    }
+  });
+
+  document.getElementById('print-overlay').classList.remove('visible');
+
+  // Pequeño delay para que el DOM actualice antes de imprimir
+  setTimeout(()=>{
+    window.print();
+    // Restaurar secciones después de imprimir
+    setTimeout(()=>{
+      _seccionesOcultadasPorModal.forEach(id=>{
+        const el=document.getElementById(id);
+        if(el)el.classList.remove('oculto-pdf');
+      });
+      _seccionesOcultadasPorModal=[];
+    },1000);
+  },120);
+}
 
 function actualizarClausula(activos){
   const tieneGas=activos.some(a=>a.includes('Gas'));
@@ -1927,6 +2057,24 @@ async function eliminarProyecto(id,nombre){
 }
 
 </script>
+
+<!-- MODAL IMPRESIÓN -->
+<div class="print-overlay" id="print-overlay">
+  <div class="print-modal">
+    <div class="print-modal-header">
+      <span class="print-modal-title">🖨 Opciones antes de imprimir</span>
+      <button class="print-modal-close" onclick="cerrarModalImpresion()">✕</button>
+    </div>
+    <div class="print-modal-body">
+      <div class="print-modal-desc">Elegí qué secciones querés incluir en el PDF para el cliente. Las secciones internas nunca se imprimen.</div>
+      <div id="print-opciones-lista"></div>
+    </div>
+    <div class="print-modal-footer">
+      <button class="print-btn print-btn-cancel" onclick="cerrarModalImpresion()">Cancelar</button>
+      <button class="print-btn print-btn-ok" onclick="ejecutarImpresion()">Imprimir / PDF →</button>
+    </div>
+  </div>
+</div>
 
 <!-- INDICADOR DE GUARDADO -->
 <div class="proy-saving" id="proy-saving">Guardando...</div>
