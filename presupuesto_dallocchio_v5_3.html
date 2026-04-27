@@ -1076,6 +1076,9 @@ function nuevoPresupuesto(){
   document.querySelectorAll('.eb').forEach(b=>b.classList.remove('activo'));
   document.getElementById('sello').classList.remove('visible');
   presupuestoGenerado=false;
+  proyectoIdActual=null; // Nueva sesión = nuevo proyecto al guardar
+  // Limpiar campos readonly del número (son readonly, el querySelectorAll anterior los salteó)
+  ['ni-pre','ni-yr','ni-num','ni-rev'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   // Fecha hoy
   const h=new Date(),d=String(h.getDate()).padStart(2,'0'),m=String(h.getMonth()+1).padStart(2,'0');
   document.getElementById('fecha-doc').value=`${d}/${m}/${h.getFullYear()}`;
@@ -1599,6 +1602,7 @@ function toggleTipo(el,nombre){
 // ══════════════════════════════════════════
 
 let filtroEstadoActual='todos';
+let proyectoIdActual=null; // ID del proyecto cargado/guardado en esta sesión
 
 function getSheetDbUrl(){
   return localStorage.getItem('dallocchio_sheetdb_url')||'';
@@ -1792,8 +1796,10 @@ async function guardarProyecto(){
   const cliente=document.querySelector('.campo-valor')?.value||'Sin cliente';
   const chips=[...document.querySelectorAll('.tipo-chip.activo')].map(c=>c.textContent.replace('✓','').trim());
   const tipo=chips.length>0?(chips[0].includes('Gas')?'GAS':chips[0].includes('Sanitarias')?'OSM':'ARQ'):'—';
-  const numeroEl=document.getElementById('ni-pre');
-  const numero=numeroEl?.value?(numeroEl.value+'-'+(document.getElementById('ni-yr')?.value||'')+'-'+(document.getElementById('ni-num')?.value||'')):'Sin número';
+  const preEl=document.getElementById('ni-pre');
+  const numero=(presupuestoGenerado&&preEl?.value)
+    ?(preEl.value+'-'+(document.getElementById('ni-yr')?.value||'')+'-'+(document.getElementById('ni-num')?.value||''))
+    :'Sin número';
   const honTotal=document.getElementById('hon-total')?.textContent?.replace('$','').trim()||'';
   const ahora=new Date().toLocaleDateString('es-AR');
   const estadoBtn=document.querySelector('.eb.activo');
@@ -1801,25 +1807,17 @@ async function guardarProyecto(){
   const saving=document.getElementById('proy-saving');
   if(saving)saving.style.display='block';
   try{
-    // Buscar si ya existe un proyecto con este número
-    let idExistente=null;
-    if(numero!=='Sin número'){
-      try{
-        const busq=await fetch(url+'/search?numero='+encodeURIComponent(numero));
-        if(busq.ok){const r=await busq.json();const arr=Array.isArray(r)?r:(r.data||[]);if(arr.length>0)idExistente=arr[0].id;}
-      }catch(e){}
-    }
-    if(idExistente){
-      // Actualizar
-      const res=await fetch(url+'/id/'+idExistente,{
+    if(proyectoIdActual){
+      // Actualizar proyecto existente en esta sesión
+      const res=await fetch(url+'/id/'+proyectoIdActual,{
         method:'PATCH',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({data:{cliente,tipo,estado,honorarios:honTotal,fecha_modificacion:ahora,datos_json:JSON.stringify(datos)}})
+        body:JSON.stringify({data:{numero,cliente,tipo,estado,honorarios:honTotal,fecha_modificacion:ahora,datos_json:JSON.stringify(datos)}})
       });
       if(!res.ok)throw new Error('Error al actualizar');
       showToast('Proyecto actualizado ✓');
     }else{
-      // Crear nuevo
+      // Crear proyecto nuevo
       const id='P'+Date.now();
       const res=await fetch(url,{
         method:'POST',
@@ -1827,6 +1825,7 @@ async function guardarProyecto(){
         body:JSON.stringify({data:[{id,numero,cliente,tipo,estado,honorarios:honTotal,fecha_creacion:ahora,fecha_modificacion:ahora,datos_json:JSON.stringify(datos)}]})
       });
       if(!res.ok)throw new Error('Error al guardar');
+      proyectoIdActual=id; // Registrar que esta sesión ya tiene un ID
       showToast('Proyecto guardado ✓');
     }
   }catch(e){
@@ -1857,6 +1856,7 @@ async function cargarProyecto(id){
     document.querySelectorAll('.tipo-chip.activo,.sub-item.activa,.tarea-grupo.activo,.medio-item.activo,.cb.marcado,.oculto-pdf').forEach(el=>el.classList.remove('activo','activa','marcado','oculto-pdf'));
     document.getElementById('hon-bloques-container').innerHTML='<div style="padding:16px;font-size:9.5px;color:var(--gris-medio);font-style:italic;">Seleccioná las tareas encomendadas para completar los honorarios.</div>';
     presupuestoGenerado=false;
+    proyectoIdActual=p.id; // Al cargar un proyecto, futuras guardadas lo actualizan
     deserializarFormulario(datos);
     cerrarPanelProyectos();
     showToast('Proyecto cargado: '+p.numero);
