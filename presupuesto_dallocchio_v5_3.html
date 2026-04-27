@@ -459,6 +459,49 @@ body{font-family:'Montserrat',sans-serif;background:#dedad4;color:var(--negro);p
   .hon-pago-opts{display:none!important;}
   .hon-pago-elegido.visible{display:flex!important;}
 }
+
+/* ══ PANEL PROYECTOS ══ */
+.proy-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;opacity:0;pointer-events:none;transition:opacity .25s;}
+.proy-overlay.visible{opacity:1;pointer-events:all;}
+.proy-drawer{position:fixed;top:0;right:0;bottom:0;width:380px;background:white;z-index:1001;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.18);}
+.proy-drawer.visible{transform:translateX(0);}
+.proy-header{padding:16px 20px;background:var(--negro);color:white;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.proy-title{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;}
+.proy-close{background:none;border:none;color:rgba(255,255,255,.6);font-size:18px;cursor:pointer;line-height:1;padding:0;}
+.proy-close:hover{color:white;}
+.proy-config{padding:12px 20px;border-bottom:1px solid var(--gris-claro);background:var(--gris-fondo);flex-shrink:0;}
+.proy-config-label{font-size:7.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gris-medio);margin-bottom:5px;display:flex;align-items:center;justify-content:space-between;}
+.proy-config-toggle{background:none;border:none;cursor:pointer;font-size:8px;color:var(--beige);font-family:'Montserrat',sans-serif;letter-spacing:.08em;text-transform:uppercase;text-decoration:underline;}
+.proy-config-body{display:none;}
+.proy-config-body.open{display:block;}
+.proy-url-input{width:100%;padding:5px 8px;border:1px solid var(--gris-claro);font-family:'Montserrat',sans-serif;font-size:8.5px;outline:none;margin-top:4px;}
+.proy-url-input:focus{border-color:var(--beige);}
+.proy-url-hint{font-size:7.5px;color:var(--gris-medio);margin-top:4px;line-height:1.5;}
+.proy-url-hint a{color:var(--beige);}
+.proy-url-save{margin-top:6px;padding:4px 10px;background:var(--negro);color:white;border:none;font-family:'Montserrat',sans-serif;font-size:7.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;}
+.proy-filtros{display:flex;gap:3px;padding:12px 20px;border-bottom:1px solid var(--gris-claro);flex-wrap:wrap;flex-shrink:0;}
+.pf-btn{padding:4px 9px;background:none;border:1px solid var(--gris-claro);font-family:'Montserrat',sans-serif;font-size:7.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-medio);cursor:pointer;transition:all .15s;}
+.pf-btn:hover{border-color:var(--beige);color:var(--negro);}
+.pf-btn.activo{background:var(--negro);color:white;border-color:var(--negro);}
+.proy-lista{flex:1;overflow-y:auto;padding:12px 20px;}
+.proy-empty{font-size:9px;color:var(--gris-medio);font-style:italic;text-align:center;padding:32px 0;}
+.proy-card{border:1px solid var(--gris-claro);padding:11px 13px;margin-bottom:8px;cursor:pointer;transition:border-color .15s,box-shadow .15s;position:relative;}
+.proy-card:hover{border-color:var(--beige);box-shadow:0 2px 8px rgba(0,0,0,.08);}
+.proy-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.proy-card-num{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--negro);}
+.proy-card-estado{font-size:7px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;}
+.proy-card-estado.borrador{background:var(--beige-claro);color:#7a6a52;}
+.proy-card-estado.enviado{background:#e8e8e8;color:var(--negro);}
+.proy-card-estado.aceptado{background:#d4edda;color:#2a5c38;}
+.proy-card-estado.rechazado{background:#f8d7da;color:#6b2020;}
+.proy-card-estado.vencido{background:#e8e8e8;color:var(--gris-medio);}
+.proy-card-cliente{font-size:9.5px;color:var(--gris-oscuro);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.proy-card-meta{display:flex;gap:10px;font-size:8px;color:var(--gris-medio);}
+.proy-card-actions{display:flex;gap:6px;margin-top:8px;border-top:1px solid #f0f0f0;padding-top:8px;}
+.pca-btn{flex:1;padding:4px;background:none;border:1px solid var(--gris-claro);font-family:'Montserrat',sans-serif;font-size:7.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .15s;}
+.pca-btn:hover{background:var(--gris-fondo);}
+.pca-btn.danger:hover{background:#fdf0f0;border-color:var(--rojo);color:var(--rojo);}
+.proy-saving{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--negro);color:white;padding:14px 24px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;z-index:2000;border-radius:2px;display:none;}
 </style>
 </head>
 <body>
@@ -477,6 +520,8 @@ body{font-family:'Montserrat',sans-serif;background:#dedad4;color:var(--negro);p
     </div>
   </div>
   <div class="tb-right">
+    <button onclick="abrirPanelProyectos()" style="padding:5px 12px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.2);font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">📂 Proyectos</button>
+    <button onclick="guardarProyecto()" style="padding:5px 12px;background:rgba(200,184,154,.2);color:var(--beige);border:1px solid rgba(200,184,154,.4);font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">💾 Guardar</button>
     <button class="btn-nuevo" id="btn-nuevo" onclick="nuevoPresupuesto()" style="padding:5px 12px;background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">+ Nuevo</button><button class="btn-imprimir" id="btn-generar" onclick="generarPresupuesto()" style="padding:5px 14px;background:var(--beige);color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Generar presupuesto</button><button class="btn-imprimir" id="btn-imprimir-real" onclick="window.print()" style="display:none;padding:5px 14px;background:white;color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Imprimir / PDF</button>
   </div>
 </div>
@@ -1133,25 +1178,7 @@ function toggleOjo(id){
   btn.textContent=oculto?'🙈':'👁';
 }
 
-// ── TIPO SERVICIO ──
-function toggleTipo(el,nombre){
-  el.classList.toggle('activo');
-  const activos=[...document.querySelectorAll('.tipo-chip.activo')].map(c=>c.textContent.replace('✓','').trim());
-  document.getElementById('titulo-sub').textContent=activos.length?activos.join(' · '):'—';
-  document.getElementById('enc-esp').textContent=activos.length?activos.join(' · '):'Arquitectura · Instalaciones de Gas · Obras Sanitarias';
-  const arq=activos.some(a=>a.includes('Arquitectura'));
-  document.getElementById('bloque-indicadores').style.display=arq?'block':'none';
-  document.getElementById('bloque-superficies').style.display=arq?'block':'none';
-  // Prefijo automático
-  const pre=document.querySelector('.ni-pre');
-  if(pre&&activos.length===1){
-    if(activos[0].includes('Gas'))pre.value='GAS';
-    else if(activos[0].includes('Sanitarias'))pre.value='OSM';
-    else pre.value='ARQ';
-  }else if(pre&&activos.length>1)pre.value='PRO';
-  // Cláusula deslinde
-  actualizarClausula(activos);
-}
+// ── TIPO SERVICIO — ver definición completa más abajo (selección única) ──
 
 function actualizarClausula(activos){
   const tieneGas=activos.some(a=>a.includes('Gas'));
@@ -1534,4 +1561,370 @@ function fmt(n){return n.toLocaleString('es-AR',{minimumFractionDigits:2,maximum
 function numLetras(num){
   const u=['','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once','doce','trece','catorce','quince','dieciséis','diecisiete','dieciocho','diecinueve'];
   const d=['','','veinte','treinta','cuarenta','cincuenta','sesenta','setenta','ochenta','noventa'];
-  const c=['','ciento','doscientos','trescientos','cuatrocientos','quinientos','seiscientos','setecientos','ochocientos','novecientos
+  const c=['','ciento','doscientos','trescientos','cuatrocientos','quinientos','seiscientos','setecientos','ochocientos','novecientos'];
+  if(num===100)return 'cien';
+  if(num<0)return 'menos '+numLetras(-num);
+  if(num<20)return u[num];
+  if(num<100)return d[Math.floor(num/10)]+(num%10?' y '+u[num%10]:'');
+  if(num<1000)return c[Math.floor(num/100)]+(num%100?' '+numLetras(num%100):'');
+  if(num<1000000)return numLetras(Math.floor(num/1000))+' mil'+(num%1000?' '+numLetras(num%1000):'');
+  return numLetras(Math.floor(num/1000000))+(Math.floor(num/1000000)===1?' millón':' millones')+(num%1000000?' '+numLetras(num%1000000):'');
+}
+
+// ══════════════════════════════════════════
+// ── TIPO SERVICIO — SELECCIÓN ÚNICA ──
+// ══════════════════════════════════════════
+function toggleTipo(el,nombre){
+  const yaActivo=el.classList.contains('activo');
+  document.querySelectorAll('.tipo-chip').forEach(c=>c.classList.remove('activo'));
+  if(!yaActivo)el.classList.add('activo');
+  const activos=[...document.querySelectorAll('.tipo-chip.activo')].map(c=>c.textContent.replace('✓','').trim());
+  document.getElementById('titulo-sub').textContent=activos.length?activos.join(' · '):'—';
+  document.getElementById('enc-esp').textContent=activos.length?activos.join(' · '):'Arquitectura · Instalaciones de Gas · Obras Sanitarias';
+  const arq=activos.some(a=>a.includes('Arquitectura'));
+  document.getElementById('bloque-indicadores').style.display=arq?'block':'none';
+  document.getElementById('bloque-superficies').style.display=arq?'block':'none';
+  const pre=document.querySelector('.ni-pre');
+  if(pre&&activos.length===1){
+    if(activos[0].includes('Gas'))pre.value='GAS';
+    else if(activos[0].includes('Sanitarias'))pre.value='OSM';
+    else pre.value='ARQ';
+  }else if(pre&&activos.length>1)pre.value='PRO';
+  actualizarClausula(activos);
+  actualizarDisciplinas();
+}
+
+// ══════════════════════════════════════════
+// ── GESTIÓN DE PROYECTOS (SheetDB) ──
+// ══════════════════════════════════════════
+
+let filtroEstadoActual='todos';
+
+function getSheetDbUrl(){
+  return localStorage.getItem('dallocchio_sheetdb_url')||'';
+}
+
+function abrirPanelProyectos(){
+  document.getElementById('proy-overlay').classList.add('visible');
+  document.getElementById('proy-drawer').classList.add('visible');
+  const url=getSheetDbUrl();
+  document.getElementById('proy-url-field').value=url;
+  if(url)cargarListaProyectos(filtroEstadoActual);
+  else{
+    document.getElementById('proy-config-body').classList.add('open');
+    document.getElementById('proy-lista').innerHTML='<div class="proy-empty">Configurá la URL de SheetDB para ver tus proyectos.</div>';
+  }
+}
+
+function cerrarPanelProyectos(){
+  document.getElementById('proy-overlay').classList.remove('visible');
+  document.getElementById('proy-drawer').classList.remove('visible');
+}
+
+function toggleConfigPanel(){
+  const body=document.getElementById('proy-config-body');
+  const btn=document.getElementById('proy-config-toggle-btn');
+  const open=body.classList.toggle('open');
+  btn.textContent=open?'Ocultar':'Configurar';
+}
+
+function guardarUrlSheetDb(){
+  const url=document.getElementById('proy-url-field').value.trim();
+  if(!url){showToast('Ingresá la URL de SheetDB');return;}
+  localStorage.setItem('dallocchio_sheetdb_url',url);
+  document.getElementById('proy-config-body').classList.remove('open');
+  document.getElementById('proy-config-toggle-btn').textContent='Configurar';
+  showToast('URL guardada');
+  cargarListaProyectos(filtroEstadoActual);
+}
+
+function filtrarProyectos(estado,btn){
+  filtroEstadoActual=estado;
+  document.querySelectorAll('.pf-btn').forEach(b=>b.classList.remove('activo'));
+  btn.classList.add('activo');
+  cargarListaProyectos(estado);
+}
+
+async function cargarListaProyectos(estado){
+  const url=getSheetDbUrl();
+  if(!url){document.getElementById('proy-lista').innerHTML='<div class="proy-empty">Configurá la URL de SheetDB primero.</div>';return;}
+  document.getElementById('proy-lista').innerHTML='<div class="proy-empty">Cargando proyectos...</div>';
+  try{
+    let endpoint=url;
+    if(estado&&estado!=='todos')endpoint=url+'/search?estado='+estado;
+    const res=await fetch(endpoint,{headers:{'Content-Type':'application/json'}});
+    if(!res.ok)throw new Error('Error '+res.status);
+    const data=await res.json();
+    const proyectos=Array.isArray(data)?data:(data.data||[]);
+    renderizarListaProyectos(proyectos);
+  }catch(e){
+    document.getElementById('proy-lista').innerHTML='<div class="proy-empty">Error al cargar proyectos. Verificá la URL de SheetDB.</div>';
+    console.error(e);
+  }
+}
+
+function renderizarListaProyectos(proyectos){
+  const lista=document.getElementById('proy-lista');
+  if(!proyectos||proyectos.length===0){lista.innerHTML='<div class="proy-empty">No hay proyectos guardados con este estado.</div>';return;}
+  // Ordenar por fecha_modificacion desc
+  proyectos.sort((a,b)=>new Date(b.fecha_modificacion||b.fecha_creacion||0)-new Date(a.fecha_modificacion||a.fecha_creacion||0));
+  lista.innerHTML=proyectos.map(p=>`
+    <div class="proy-card" id="card-${p.id}">
+      <div class="proy-card-top">
+        <div class="proy-card-num">${p.numero||'Sin número'}</div>
+        <div class="proy-card-estado ${p.estado||'borrador'}">${(p.estado||'borrador').toUpperCase()}</div>
+      </div>
+      <div class="proy-card-cliente">${p.cliente||'Sin cliente'}</div>
+      <div class="proy-card-meta">
+        <span>📐 ${p.tipo||'—'}</span>
+        <span>💰 ${p.honorarios?'$ '+p.honorarios:'—'}</span>
+        <span>📅 ${p.fecha_modificacion||p.fecha_creacion||'—'}</span>
+      </div>
+      <div class="proy-card-actions">
+        <button class="pca-btn" onclick="cargarProyecto('${p.id}')">📂 Abrir</button>
+        <button class="pca-btn danger" onclick="eliminarProyecto('${p.id}','${(p.numero||'este proyecto').replace(/'/g,"\\'")}')">🗑 Eliminar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── SERIALIZAR FORMULARIO ──
+function serializarFormulario(){
+  const datos={};
+  // Inputs y textareas con ID
+  document.querySelectorAll('#hoja input[id]:not([readonly]), #hoja textarea[id]').forEach(el=>{datos['id_'+el.id]=el.value;});
+  // Campos sin ID (campo-valor, cat-input, ind-input, sup-input, cond-input) por índice
+  ['campo-valor','cat-input','ind-input','sup-input'].forEach(cls=>{
+    document.querySelectorAll('#hoja .'+cls).forEach((el,i)=>{datos[cls+'_'+i]=el.value;});
+  });
+  // Selects
+  document.querySelectorAll('#hoja select').forEach((el,i)=>{datos['select_'+i]=el.value;});
+  // Chips activos
+  datos.chips_activos=[...document.querySelectorAll('.tipo-chip.activo')].map(c=>c.dataset.nombre||c.textContent.replace('✓','').trim());
+  // Estado (borrador/enviado/etc.)
+  const estadoBtn=document.querySelector('.eb.activo');
+  datos.estado=estadoBtn?estadoBtn.classList[1]:'borrador';
+  // Tareas activas
+  datos.subitems_activos=[...document.querySelectorAll('.sub-item.activa')].map(el=>el.dataset.tarea);
+  datos.grupos_activos=[...document.querySelectorAll('.tarea-grupo.activo')].map(el=>el.id);
+  datos.medios_activos=[...document.querySelectorAll('.medio-item.activo')].map(el=>el.dataset.medio||el.textContent.trim());
+  datos.otros_activos=[...document.querySelectorAll('.otros-item.activa')].map(el=>el.dataset.nombre||el.textContent.trim());
+  datos.checks_marcados=[...document.querySelectorAll('.cb.marcado')].map((_,i)=>i);
+  // Contenido dinámico
+  datos.hon_bloques_html=document.getElementById('hon-bloques-container')?.innerHTML||'';
+  datos.obs_internas_html=document.getElementById('obs-internas')?.innerHTML||'';
+  // Metadatos
+  datos.presupuesto_generado=presupuestoGenerado;
+  datos.correlativo=correlativo;
+  datos.sello_visible=document.getElementById('sello')?.classList.contains('visible')||false;
+  datos.enc_ig_visible=document.getElementById('enc-ig')?.classList.contains('visible')||false;
+  // Bloques ocultos en PDF
+  datos.bloques_ocultos=[...document.querySelectorAll('.oculto-pdf')].map(el=>el.id).filter(Boolean);
+  // Superficies toggle activo
+  datos.sup_toggles_activos=[...document.querySelectorAll('.sup-toggle.activo')].map(el=>el.id||el.textContent.trim());
+  return datos;
+}
+
+// ── DESERIALIZAR FORMULARIO ──
+function deserializarFormulario(datos){
+  if(!datos)return;
+  // Limpiar primero
+  document.querySelectorAll('.tipo-chip.activo').forEach(el=>el.classList.remove('activo'));
+  document.querySelectorAll('.sub-item.activa,.tarea-grupo.activo,.medio-item.activo,.otros-item.activa,.cb.marcado').forEach(el=>el.classList.remove('activo','activa','marcado'));
+  // Chips
+  if(datos.chips_activos&&datos.chips_activos.length){
+    const nombre=datos.chips_activos[0];
+    const chip=[...document.querySelectorAll('.tipo-chip')].find(c=>c.textContent.replace('✓','').trim()===nombre);
+    if(chip){chip.classList.add('activo');actualizarDisciplinas();}
+  }
+  // Inputs con ID
+  Object.keys(datos).filter(k=>k.startsWith('id_')).forEach(k=>{
+    const el=document.getElementById(k.slice(3));
+    if(el&&!el.readOnly)el.value=datos[k];
+  });
+  // Inputs por clase e índice
+  ['campo-valor','cat-input','ind-input','sup-input'].forEach(cls=>{
+    document.querySelectorAll('#hoja .'+cls).forEach((el,i)=>{
+      if(datos[cls+'_'+i]!==undefined)el.value=datos[cls+'_'+i];
+    });
+  });
+  // Selects
+  document.querySelectorAll('#hoja select').forEach((el,i)=>{
+    if(datos['select_'+i]!==undefined)el.value=datos['select_'+i];
+  });
+  // Estado
+  if(datos.estado){
+    const btn=document.querySelector('.eb.'+datos.estado);
+    if(btn)aplicarEstado(btn,datos.estado);
+  }
+  // Tareas
+  if(datos.grupos_activos)datos.grupos_activos.forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add('activo');});
+  if(datos.subitems_activos)datos.subitems_activos.forEach(t=>{
+    const el=document.querySelector(`.sub-item[data-tarea="${t}"]`);if(el)el.classList.add('activa');
+  });
+  if(datos.medios_activos)datos.medios_activos.forEach(m=>{
+    const el=[...document.querySelectorAll('.medio-item')].find(e=>(e.dataset.medio||e.textContent.trim())===m);if(el)el.classList.add('activo');
+  });
+  // Checks
+  if(datos.checks_marcados){const cbs=document.querySelectorAll('.cb');datos.checks_marcados.forEach(i=>{if(cbs[i])cbs[i].classList.add('marcado');});}
+  // Contenido dinámico
+  if(datos.hon_bloques_html){const c=document.getElementById('hon-bloques-container');if(c)c.innerHTML=datos.hon_bloques_html;}
+  if(datos.obs_internas_html){const c=document.getElementById('obs-internas');if(c)c.innerHTML=datos.obs_internas_html;}
+  // Metadatos
+  if(datos.presupuesto_generado){
+    presupuestoGenerado=true;
+    document.getElementById('nro-pendiente').style.display='none';
+    document.getElementById('nro-campos').style.display='flex';
+    document.getElementById('btn-generar').style.display='none';
+    document.getElementById('btn-imprimir-real').style.display='block';
+  }
+  if(datos.correlativo)correlativo=datos.correlativo;
+  if(datos.sello_visible)document.getElementById('sello')?.classList.add('visible');
+  if(datos.enc_ig_visible){document.getElementById('enc-ig')?.classList.add('visible');const b=document.getElementById('btn-ig');if(b)b.textContent='− Ocultar Instagram';}
+  if(datos.bloques_ocultos)datos.bloques_ocultos.forEach(id=>{const el=document.getElementById(id);if(el){el.classList.add('oculto-pdf');const btn=document.getElementById('ojo-'+id.replace('bloque-','').replace('contenido-',''));if(btn)btn.textContent='🙈';}});
+}
+
+// ── GUARDAR PROYECTO ──
+async function guardarProyecto(){
+  const url=getSheetDbUrl();
+  if(!url){showToast('Configurá SheetDB primero (📂 Proyectos → Configurar)');return;}
+  const datos=serializarFormulario();
+  const cliente=document.querySelector('.campo-valor')?.value||'Sin cliente';
+  const chips=[...document.querySelectorAll('.tipo-chip.activo')].map(c=>c.textContent.replace('✓','').trim());
+  const tipo=chips.length>0?(chips[0].includes('Gas')?'GAS':chips[0].includes('Sanitarias')?'OSM':'ARQ'):'—';
+  const numeroEl=document.getElementById('ni-pre');
+  const numero=numeroEl?.value?(numeroEl.value+'-'+(document.getElementById('ni-yr')?.value||'')+'-'+(document.getElementById('ni-num')?.value||'')):'Sin número';
+  const honTotal=document.getElementById('hon-total')?.textContent?.replace('$','').trim()||'';
+  const ahora=new Date().toLocaleDateString('es-AR');
+  const estadoBtn=document.querySelector('.eb.activo');
+  const estado=estadoBtn?estadoBtn.classList[1]:'borrador';
+  const saving=document.getElementById('proy-saving');
+  if(saving)saving.style.display='block';
+  try{
+    // Buscar si ya existe un proyecto con este número
+    let idExistente=null;
+    if(numero!=='Sin número'){
+      try{
+        const busq=await fetch(url+'/search?numero='+encodeURIComponent(numero));
+        if(busq.ok){const r=await busq.json();const arr=Array.isArray(r)?r:(r.data||[]);if(arr.length>0)idExistente=arr[0].id;}
+      }catch(e){}
+    }
+    if(idExistente){
+      // Actualizar
+      const res=await fetch(url+'/id/'+idExistente,{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({data:{cliente,tipo,estado,honorarios:honTotal,fecha_modificacion:ahora,datos_json:JSON.stringify(datos)}})
+      });
+      if(!res.ok)throw new Error('Error al actualizar');
+      showToast('Proyecto actualizado ✓');
+    }else{
+      // Crear nuevo
+      const id='P'+Date.now();
+      const res=await fetch(url,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({data:[{id,numero,cliente,tipo,estado,honorarios:honTotal,fecha_creacion:ahora,fecha_modificacion:ahora,datos_json:JSON.stringify(datos)}]})
+      });
+      if(!res.ok)throw new Error('Error al guardar');
+      showToast('Proyecto guardado ✓');
+    }
+  }catch(e){
+    showToast('Error al guardar. Verificá la conexión y la URL de SheetDB.');
+    console.error(e);
+  }finally{
+    if(saving)saving.style.display='none';
+  }
+}
+
+// ── CARGAR PROYECTO ──
+async function cargarProyecto(id){
+  const url=getSheetDbUrl();
+  if(!url)return;
+  if(!confirm('¿Abrir este proyecto? Los cambios no guardados se perderán.'))return;
+  const saving=document.getElementById('proy-saving');
+  if(saving){saving.textContent='Cargando...';saving.style.display='block';}
+  try{
+    const res=await fetch(url+'/search?id='+id);
+    if(!res.ok)throw new Error('Error '+res.status);
+    const data=await res.json();
+    const arr=Array.isArray(data)?data:(data.data||[]);
+    if(!arr.length){showToast('No se encontró el proyecto');return;}
+    const p=arr[0];
+    const datos=JSON.parse(p.datos_json||'{}');
+    // Reset completo
+    document.querySelectorAll('.hoja input:not([readonly]),.hoja textarea').forEach(el=>el.value='');
+    document.querySelectorAll('.tipo-chip.activo,.sub-item.activa,.tarea-grupo.activo,.medio-item.activo,.cb.marcado,.oculto-pdf').forEach(el=>el.classList.remove('activo','activa','marcado','oculto-pdf'));
+    document.getElementById('hon-bloques-container').innerHTML='<div style="padding:16px;font-size:9.5px;color:var(--gris-medio);font-style:italic;">Seleccioná las tareas encomendadas para completar los honorarios.</div>';
+    presupuestoGenerado=false;
+    deserializarFormulario(datos);
+    cerrarPanelProyectos();
+    showToast('Proyecto cargado: '+p.numero);
+  }catch(e){
+    showToast('Error al cargar el proyecto.');
+    console.error(e);
+  }finally{
+    if(saving)saving.style.display='none';
+  }
+}
+
+// ── ELIMINAR PROYECTO ──
+async function eliminarProyecto(id,nombre){
+  const url=getSheetDbUrl();
+  if(!url)return;
+  if(!confirm('¿Eliminar "'+nombre+'"? Esta acción no se puede deshacer.'))return;
+  try{
+    const res=await fetch(url+'/id/'+id,{method:'DELETE'});
+    if(!res.ok)throw new Error('Error '+res.status);
+    document.getElementById('card-'+id)?.remove();
+    showToast('Proyecto eliminado');
+    const lista=document.getElementById('proy-lista');
+    if(lista&&!lista.querySelector('.proy-card'))lista.innerHTML='<div class="proy-empty">No hay proyectos con este estado.</div>';
+  }catch(e){
+    showToast('Error al eliminar.');
+    console.error(e);
+  }
+}
+
+</script>
+
+<!-- INDICADOR DE GUARDADO -->
+<div class="proy-saving" id="proy-saving">Guardando...</div>
+
+<!-- PANEL DE PROYECTOS -->
+<div class="proy-overlay" id="proy-overlay" onclick="cerrarPanelProyectos()"></div>
+<div class="proy-drawer" id="proy-drawer">
+  <div class="proy-header">
+    <span class="proy-title">📂 Mis Proyectos</span>
+    <button class="proy-close" onclick="cerrarPanelProyectos()">✕</button>
+  </div>
+  <div class="proy-config">
+    <div class="proy-config-label">
+      Conexión SheetDB
+      <button class="proy-config-toggle" id="proy-config-toggle-btn" onclick="toggleConfigPanel()">Configurar</button>
+    </div>
+    <div class="proy-config-body" id="proy-config-body">
+      <input class="proy-url-input" id="proy-url-field" type="text" placeholder="https://sheetdb.io/api/v1/xxxxxxxx">
+      <div class="proy-url-hint">
+        1. Creá una hoja en <a href="https://sheets.google.com" target="_blank">Google Sheets</a> con estas columnas en la fila 1:<br>
+        <strong>id · numero · cliente · tipo · estado · honorarios · fecha_creacion · fecha_modificacion · datos_json</strong><br><br>
+        2. Registrate en <a href="https://sheetdb.io" target="_blank">sheetdb.io</a> (gratis), conectá tu hoja y copiá la URL de la API aquí.
+      </div>
+      <button class="proy-url-save" onclick="guardarUrlSheetDb()">Guardar configuración</button>
+    </div>
+  </div>
+  <div class="proy-filtros">
+    <button class="pf-btn activo" onclick="filtrarProyectos('todos',this)">Todos</button>
+    <button class="pf-btn" onclick="filtrarProyectos('borrador',this)">Borrador</button>
+    <button class="pf-btn" onclick="filtrarProyectos('enviado',this)">Enviado</button>
+    <button class="pf-btn" onclick="filtrarProyectos('aceptado',this)">Aceptado</button>
+    <button class="pf-btn" onclick="filtrarProyectos('rechazado',this)">Rechazado</button>
+    <button class="pf-btn" onclick="filtrarProyectos('vencido',this)">Vencido</button>
+  </div>
+  <div class="proy-lista" id="proy-lista">
+    <div class="proy-empty">Configurá SheetDB para ver tus proyectos guardados.</div>
+  </div>
+</div>
+
+</body>
+</html>
