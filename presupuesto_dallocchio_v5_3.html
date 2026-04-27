@@ -477,7 +477,7 @@ body{font-family:'Montserrat',sans-serif;background:#dedad4;color:var(--negro);p
 }
 
 /* ══ MODAL IMPRESIÓN ══ */
-.print-overlay{position:fixed!important;inset:0!important;background:rgba(0,0,0,.5)!important;z-index:100001!important;display:none!important;align-items:center;justify-content:center;visibility:visible!important;opacity:1!important;}
+.print-overlay{position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,.5)!important;z-index:100001!important;display:none!important;align-items:center;justify-content:center;}
 .print-overlay.visible{display:flex!important;}
 .print-modal{background:white;width:420px;max-width:95vw;border-radius:3px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.25);}
 .print-modal-header{background:var(--negro);color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
@@ -1278,53 +1278,51 @@ const SECCIONES_PRINT=[
 let _seccionesOcultadasPorModal=[];
 
 function mostrarModalImpresion(){
-  try{
-  console.log('[Imprimir] abriendo modal...');
-  const lista=document.getElementById('print-opciones-lista');
-  console.log('[Imprimir] lista:', lista);
-  if(!lista){showToast('Error: modal de impresión no encontrado');return;}
-  lista.innerHTML='';
-  _seccionesOcultadasPorModal=[];
+  // setTimeout(0) breaks the current event cycle (same fix as abrirPanelProyectos)
+  setTimeout(()=>{
+    try{
+    const lista=document.getElementById('print-opciones-lista');
+    if(!lista){showToast('Error: modal de impresión no encontrado');return;}
+    lista.innerHTML='';
+    _seccionesOcultadasPorModal=[];
 
-  SECCIONES_PRINT.forEach(sec=>{
-    const el=document.getElementById(sec.id);
-    if(!el)return;
-    // Solo mostrar si la sección está actualmente visible
-    const estilo=window.getComputedStyle(el);
-    if(estilo.display==='none'&&!sec.siempre)return;
+    SECCIONES_PRINT.forEach(sec=>{
+      const el=document.getElementById(sec.id);
+      if(!el)return;
+      // Solo mostrar si la sección está actualmente visible
+      const estilo=window.getComputedStyle(el);
+      if(estilo.display==='none'&&!sec.siempre)return;
 
-    const div=document.createElement('div');
-    div.className='print-opcion on';
-    div.dataset.id=sec.id;
-    div.innerHTML=`
-      <div class="print-check">✓</div>
-      <div>
-        <div class="print-opcion-label">${sec.label}</div>
-        <div class="print-opcion-desc">${sec.desc}</div>
-      </div>`;
-    div.addEventListener('click',()=>{
-      div.classList.toggle('on');
-      const check=div.querySelector('.print-check');
-      check.textContent=div.classList.contains('on')?'✓':'';
+      const div=document.createElement('div');
+      div.className='print-opcion on';
+      div.dataset.id=sec.id;
+      div.innerHTML=`
+        <div class="print-check">✓</div>
+        <div>
+          <div class="print-opcion-label">${sec.label}</div>
+          <div class="print-opcion-desc">${sec.desc}</div>
+        </div>`;
+      div.addEventListener('click',()=>{
+        div.classList.toggle('on');
+        const check=div.querySelector('.print-check');
+        check.textContent=div.classList.contains('on')?'✓':'';
+      });
+      lista.appendChild(div);
     });
-    lista.appendChild(div);
-  });
 
-  // Si no hay secciones opcionales visibles, mostrar mensaje
-  if(!lista.children.length){
-    lista.innerHTML='<div style="font-size:9px;color:var(--gris-medio);font-style:italic;">No hay secciones opcionales activas en este presupuesto.</div>';
-  }
+    // Si no hay secciones opcionales visibles, mostrar mensaje
+    if(!lista.children.length){
+      lista.innerHTML='<div style="font-size:9px;color:var(--gris-medio);font-style:italic;">No hay secciones opcionales activas en este presupuesto.</div>';
+    }
 
-  const po=document.getElementById('print-overlay');
-  console.log('[Imprimir] print-overlay:', po);
-  if(!po){showToast('Error: overlay de impresión no encontrado');return;}
-  po.style.display='flex';
-  po.classList.add('visible');
-  console.log('[Imprimir] modal abierto ✓');
-  }catch(err){
-    console.error('[Imprimir] error:', err);
-    showToast('Error al abrir impresión: '+err.message);
-  }
+    const po=document.getElementById('print-overlay');
+    if(!po){showToast('Error: overlay de impresión no encontrado');return;}
+    po.style.cssText='display:flex!important;position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,.5)!important;z-index:100001!important;align-items:center!important;justify-content:center!important;';
+    po.classList.add('visible');
+    }catch(err){
+      showToast('Error al abrir impresión: '+err.message);
+    }
+  },0);
 }
 
 function cerrarModalImpresion(){
