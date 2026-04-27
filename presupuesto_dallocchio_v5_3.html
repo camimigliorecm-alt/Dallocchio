@@ -22,7 +22,7 @@
 body{font-family:'Montserrat',sans-serif;background:#dedad4;color:var(--negro);padding:24px 16px;font-size:13px;}
 
 /* ══ TOOLBAR ══ */
-.toolbar{max-width:880px;margin:0 auto 12px;background:var(--negro);padding:8px 16px;border-radius:3px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:relative;z-index:10;}
+.toolbar{max-width:880px;margin:0 auto 12px;background:var(--negro);padding:8px 16px;border-radius:3px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:100;}
 .tb-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .tb-badge{font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);}
 .estado-grupo{display:flex;gap:3px;}
@@ -1131,6 +1131,8 @@ function nuevoPresupuesto(){
   const _spArq=document.getElementById('sp-arq-solo');if(_spArq)_spArq.style.display='none';
   document.getElementById('titulo-sub').textContent='—';
   document.getElementById('enc-esp').textContent='Arquitectura · Instalaciones de Gas · Obras Sanitarias';
+  // Asegurarse de que la edición esté habilitada al iniciar un nuevo presupuesto
+  habilitarEdicion();
   showToast('Nuevo presupuesto iniciado');
 }
 
@@ -1939,7 +1941,7 @@ function deserializarFormulario(datos){
   document.querySelectorAll('#hoja select').forEach((el,i)=>{
     if(datos['select_'+i]!==undefined)el.value=datos['select_'+i];
   });
-  // Estado
+  // Estado (solo visual — el bloqueo se aplica al final, cuando todo está restaurado)
   if(datos.estado){
     const btn=document.querySelector('.eb.'+datos.estado);
     if(btn)aplicarEstado(btn,datos.estado);
@@ -1969,6 +1971,10 @@ function deserializarFormulario(datos){
   if(datos.sello_visible)document.getElementById('sello')?.classList.add('visible');
   if(datos.enc_ig_visible){document.getElementById('enc-ig')?.classList.add('visible');const b=document.getElementById('btn-ig');if(b)b.textContent='− Ocultar Instagram';}
   if(datos.bloques_ocultos)datos.bloques_ocultos.forEach(id=>{const el=document.getElementById(id);if(el){el.classList.add('oculto-pdf');const btn=document.getElementById('ojo-'+id.replace('bloque-','').replace('contenido-',''));if(btn)btn.textContent='🙈';}});
+  // Si el estado guardado es bloqueado, aplicar bloqueo ahora que todo está restaurado
+  if(datos.estado&&['enviado','aceptado','rechazado','vencido'].includes(datos.estado)){
+    bloquearEdicion();
+  }
 }
 
 // ── EXTRAER DATOS RESUMEN DEL FORMULARIO (todas las columnas legibles) ──
