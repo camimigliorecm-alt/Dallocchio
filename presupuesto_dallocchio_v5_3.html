@@ -1168,12 +1168,12 @@ function actualizarDisciplinas(){
   const go=document.getElementById('grupo-osm');if(go)go.style.display=osm?'':'none';
   
   // Bloques arquitectura
-  document.getElementById('bloque-indicadores').style.display=arq?'block':'none';
-  document.getElementById('bloque-superficies').style.display=arq?'block':'none';
-  document.getElementById('sp-arq-solo').style.display=arq?'block':'none';
-  
+  const bi=document.getElementById('bloque-indicadores');if(bi)bi.style.display=arq?'block':'none';
+  const bs=document.getElementById('bloque-superficies');if(bs)bs.style.display=arq?'block':'none';
+  const spArq=document.getElementById('sp-arq-solo');if(spArq)spArq.style.display=arq?'block':'none';
+
   // Cláusula deslinde
-  document.getElementById('clausula-deslinde').style.display=(gas||osm)?'block':'none';
+  const cd=document.getElementById('clausula-deslinde');if(cd)cd.style.display=(gas||osm)?'block':'none';
   
   // Documentación filtrada
   const da=document.getElementById('doc-arq');if(da)da.style.display=arq?'':'none';
@@ -1791,10 +1791,10 @@ async function cargarListaProyectos(estado){
     let endpoint=url;
     if(estado&&estado!=='todos')endpoint=url+'/search?estado='+encodeURIComponent(estado)+'&limit=200';
     else endpoint=url+'?limit=200';
-    const res=await fetch(endpoint);
+    const res=await fetch(endpoint,{mode:'cors'});
     if(!res.ok){
-      const txt=await res.text();
-      throw new Error('SheetDB respondió '+res.status+': '+txt.slice(0,80));
+      const txt=await res.text().catch(()=>'');
+      throw new Error('SheetDB respondió '+res.status+(txt?' — '+txt.slice(0,80):''));
     }
     const data=await res.json();
     // SheetDB puede devolver array directo o {data:[...]}
