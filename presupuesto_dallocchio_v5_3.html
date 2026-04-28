@@ -2138,6 +2138,11 @@ async function guardarProyecto(){
     // 1. localStorage (siempre funciona, sin CORS)
     const id=proyectoIdActual||('P'+Date.now());
     const esNuevo=!proyectoIdActual;
+    // Si el número no pudo calcularse (campos readonly vacíos), preservar el número existente
+    if(resumen.numero==='Sin número'&&!esNuevo){
+      const existente=dbLeer().find(x=>x.id===proyectoIdActual);
+      if(existente?.numero&&existente.numero!=='Sin número')resumen.numero=existente.numero;
+    }
     const proyecto={
       id,
       ...(esNuevo?{fecha_creacion:ahora}:{}),
