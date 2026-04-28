@@ -1982,10 +1982,10 @@ function deserializarFormulario(datos){
     const chip=[...document.querySelectorAll('.tipo-chip')].find(c=>c.textContent.replace('✓','').trim()===nombre);
     if(chip){chip.classList.add('activo');actualizarDisciplinas();}
   }
-  // Inputs con ID
+  // Inputs con ID (incluye readonly como ni-pre, ni-yr, ni-num)
   Object.keys(datos).filter(k=>k.startsWith('id_')).forEach(k=>{
     const el=document.getElementById(k.slice(3));
-    if(el&&!el.readOnly)el.value=datos[k];
+    if(el)el.value=datos[k];
   });
   // Inputs por clase e índice
   ['campo-valor','cat-input','ind-input','sup-input'].forEach(cls=>{
