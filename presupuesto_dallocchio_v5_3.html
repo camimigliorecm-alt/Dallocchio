@@ -1840,7 +1840,7 @@ function abrirPanelProyectos(ev){
   document.body.appendChild(overlay);
   document.body.appendChild(drawer);
   // setAttribute es el método más confiable — equivale al atributo style en HTML
-  overlay.setAttribute('style','position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);z-index:99999');
+  overlay.setAttribute('style','display:block;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);z-index:99999');
   drawer.setAttribute('style','position:fixed;top:0;right:0;height:100%;width:380px;background:#fff;z-index:100000;display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.18);overflow-y:auto');
   const campo=document.getElementById('proy-url-field');
   if(campo)campo.value=getSheetDbUrl();
