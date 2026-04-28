@@ -1936,8 +1936,8 @@ function renderizarListaProyectos(lista){
 // ── SERIALIZAR FORMULARIO ──
 function serializarFormulario(){
   const datos={};
-  // Inputs y textareas con ID
-  document.querySelectorAll('#hoja input[id]:not([readonly]), #hoja textarea[id]').forEach(el=>{datos['id_'+el.id]=el.value;});
+  // Inputs y textareas con ID (incluye readonly de número de presupuesto)
+  document.querySelectorAll('#hoja input[id], #hoja textarea[id]').forEach(el=>{datos['id_'+el.id]=el.value;});
   // Campos sin ID (campo-valor, cat-input, ind-input, sup-input, cond-input) por índice
   ['campo-valor','cat-input','ind-input','sup-input'].forEach(cls=>{
     document.querySelectorAll('#hoja .'+cls).forEach((el,i)=>{datos[cls+'_'+i]=el.value;});
