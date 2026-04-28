@@ -558,9 +558,9 @@ body{font-family:'Montserrat',sans-serif;background:#dedad4;color:var(--negro);p
     </div>
   </div>
   <div class="tb-right">
-    <button onclick="abrirPanelProyectos()" style="padding:5px 12px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.2);font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">📂 Proyectos</button>
+    <button onclick="abrirPanelProyectos(event)" style="padding:5px 12px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.2);font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">📂 Proyectos</button>
     <button onclick="guardarProyecto()" style="padding:5px 12px;background:rgba(200,184,154,.2);color:var(--beige);border:1px solid rgba(200,184,154,.4);font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">💾 Guardar</button>
-    <button class="btn-nuevo" id="btn-nuevo" onclick="nuevoPresupuesto()" style="padding:5px 12px;background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">+ Nuevo</button><button class="btn-imprimir" id="btn-generar" onclick="generarPresupuesto()" style="padding:5px 14px;background:var(--beige);color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Generar presupuesto</button><button class="btn-imprimir" id="btn-imprimir-real" onclick="mostrarModalImpresion()" style="padding:5px 14px;background:white;color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Imprimir / PDF</button>
+    <button class="btn-nuevo" id="btn-nuevo" onclick="nuevoPresupuesto()" style="padding:5px 12px;background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">+ Nuevo</button><button class="btn-imprimir" id="btn-generar" onclick="generarPresupuesto()" style="padding:5px 14px;background:var(--beige);color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Generar presupuesto</button><button class="btn-imprimir" id="btn-imprimir-real" onclick="mostrarModalImpresion(event)" style="padding:5px 14px;background:white;color:var(--negro);border:none;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Imprimir / PDF</button>
   </div>
 </div>
 
@@ -1277,10 +1277,9 @@ const SECCIONES_PRINT=[
 
 let _seccionesOcultadasPorModal=[];
 
-function mostrarModalImpresion(){
-  // setTimeout(0) breaks the current event cycle (same fix as abrirPanelProyectos)
-  setTimeout(()=>{
-    try{
+function mostrarModalImpresion(ev){
+  if(ev){ev.stopPropagation();ev.preventDefault();}
+  try{
     const lista=document.getElementById('print-opciones-lista');
     if(!lista){showToast('Error: modal de impresión no encontrado');return;}
     lista.innerHTML='';
@@ -1317,21 +1316,11 @@ function mostrarModalImpresion(){
 
     const po=document.getElementById('print-overlay');
     if(!po){showToast('Error: overlay de impresión no encontrado');return;}
-    po.removeAttribute('style');
-    po.style.display='flex';
-    po.style.position='fixed';
-    po.style.top='0';
-    po.style.left='0';
-    po.style.width='100vw';
-    po.style.height='100vh';
-    po.style.background='rgba(0,0,0,.5)';
-    po.style.zIndex='100001';
-    po.style.alignItems='center';
-    po.style.justifyContent='center';
-    }catch(err){
-      showToast('Error al abrir impresión: '+err.message);
-    }
-  },0);
+    document.body.appendChild(po);
+    po.setAttribute('style','position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:100001;display:flex;align-items:center;justify-content:center');
+  }catch(err){
+    showToast('Error al abrir impresión: '+err.message);
+  }
 }
 
 function cerrarModalImpresion(){
@@ -1842,46 +1831,25 @@ async function sheetdbSincronizar(){
 }
 
 // ── UI del panel ──
-function abrirPanelProyectos(){
-  // setTimeout(0) rompe el ciclo del evento actual para evitar que el click
-  // burbujee al overlay y lo cierre de inmediato.
-  setTimeout(()=>{
-    const overlay=document.getElementById('proy-overlay');
-    const drawer=document.getElementById('proy-drawer');
-    if(!overlay||!drawer){showToast('Error: panel no encontrado');return;}
-    // Limpiar estilos inline anteriores y aplicar sin !important
-    // (los estilos inline ya tienen mayor especificidad que cualquier regla CSS)
-    overlay.removeAttribute('style');
-    drawer.removeAttribute('style');
-    overlay.style.display='block';
-    overlay.style.position='fixed';
-    overlay.style.top='0';
-    overlay.style.left='0';
-    overlay.style.width='100vw';
-    overlay.style.height='100vh';
-    overlay.style.background='rgba(0,0,0,.45)';
-    overlay.style.zIndex='99999';
-    drawer.style.display='flex';
-    drawer.style.flexDirection='column';
-    drawer.style.position='fixed';
-    drawer.style.top='0';
-    drawer.style.right='0';
-    drawer.style.height='100vh';
-    drawer.style.width='380px';
-    drawer.style.background='white';
-    drawer.style.zIndex='100000';
-    drawer.style.boxShadow='-4px 0 24px rgba(0,0,0,.18)';
-    drawer.style.overflowY='auto';
-    const campo=document.getElementById('proy-url-field');
-    if(campo)campo.value=getSheetDbUrl();
-    cargarListaProyectos(filtroEstadoActual);
-  },0);
+function abrirPanelProyectos(ev){
+  if(ev){ev.stopPropagation();ev.preventDefault();}
+  const overlay=document.getElementById('proy-overlay');
+  const drawer=document.getElementById('proy-drawer');
+  if(!overlay||!drawer){showToast('Error: panel no encontrado');return;}
+  // Mover al body root por si están dentro de algún contenedor con overflow/stacking
+  document.body.appendChild(overlay);
+  document.body.appendChild(drawer);
+  // setAttribute es el método más confiable — equivale al atributo style en HTML
+  overlay.setAttribute('style','position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);z-index:99999');
+  drawer.setAttribute('style','position:fixed;top:0;right:0;height:100%;width:380px;background:#fff;z-index:100000;display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.18);overflow-y:auto');
+  const campo=document.getElementById('proy-url-field');
+  if(campo)campo.value=getSheetDbUrl();
+  cargarListaProyectos(filtroEstadoActual);
 }
 
 function cerrarPanelProyectos(){
   const overlay=document.getElementById('proy-overlay');
   const drawer=document.getElementById('proy-drawer');
-  // Quitar estilos inline para que el CSS (display:none) tome el control
   if(overlay){overlay.removeAttribute('style');}
   if(drawer){drawer.removeAttribute('style');}
 }
